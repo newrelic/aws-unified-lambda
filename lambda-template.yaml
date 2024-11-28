@@ -1,0 +1,537 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: New Relic Template to forward logs using S3 bucket and/or cloudwatch using lambda
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: NewRelic-log-forwarding
+    Description: Send log data from AWS to New Relic.
+    Author: New Relic
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: LICENSE.txt
+    ReadmeUrl: README.md
+    HomePageUrl: https://github.com/newrelic/aws-unified-logging #TODO change this url once the repo is public
+    SemanticVersion: 0.0.17
+    SourceCodeUrl: https://github.com/newrelic/aws-unified-logging #TODO change this url once the repo is public
+
+  AWS::CloudFormation::Interface:
+    ParameterLabels:
+      NewRelicAccountId:
+        default: 'NewRelic account ID'
+      LicenseKey:
+        default: 'New Relic Ingest License Key'
+      NewRelicRegion:
+        default: 'New Relic Datacenter Region'          
+      LogGroupConfig:
+        default: 'Log Groups name & filter (if applicable)'        
+      S3BucketNames:
+        default: 'S3 bucket Names & Prefix (if applicable)'
+      CommonAttributes:
+        default: 'Common Attributes to be added to the log events'
+      StoreNRLicenseKeyInSecretManager: 
+        default: 'Store New Relic License Key in AWS Secrets Manager'
+        
+Parameters:
+  LicenseKey:
+    Type: String
+    Description: New relic license key, create or get and existing key in https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher
+    NoEcho: true
+    MaxLength: 40
+    AllowedPattern: "^[^\\s]+$"
+    ConstraintDescription: "The parameter value cannot be empty, contain spaces, and must be alphanumeric and can contain symbols."
+  NewRelicRegion:
+    Type: String
+    Description: Datacenter where the data will be sent (US/EU), DO NOT TOUCH
+    Default: "US"
+    AllowedValues:
+      - "US"
+      - "EU"
+  NewRelicAccountId: 
+    Type: String
+    Description: Id of the account in New relic
+    AllowedPattern: "[0-9]+"
+    ConstraintDescription: must only contain numbers
+  S3BucketNames:
+    Type: String
+    Description: "JSON array of objects representing your S3Bucketname and prefixes (if applicable) For example: [{\"bucket\":\"bucket1\",\"prefix\":\"prefix/\"}]"
+    Default: ""
+  LogGroupConfig:
+    Description: "JSON array of objects representing your LogGroup and Filters (if applicable). For example: [{\"LogGroupName\":\"logGroup1\",\"FilterPattern\":\"filter1\"}]"
+    Type: String
+  CommonAttributes:
+    Type: String
+    Description: "JSON array of objects representing your custom attributes. For example: [{\"AttributeName\":\"key1\",\"AttributeValue\":\"value1\"}]"
+    Default: ""
+  StoreNRLicenseKeyInSecretManager:
+    Type: String
+    Description: Should we store the New Relic license key in AWS Secrets Manager. Defaults to true.
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false" 
+
+Conditions:
+  ShouldCreateSecret: !Equals [ !Ref StoreNRLicenseKeyInSecretManager, "true" ]
+  AddS3Trigger: !Not [ !Equals [!Ref S3BucketNames , ""]]
+  AddCloudwatchTrigger: !Not [ !Equals [!Ref LogGroupConfig , ""]]
+  IsCommonAttributesNotBlank: !Not [!Equals [!Ref CommonAttributes, ""]]
+
+Mappings:
+  RegionToS3Bucket:
+    us-east-1:
+      BucketArn: 'unified-logging-lambda-code-us-east-1'
+    us-east-2:
+      BucketArn: 'unified-logging-lambda-code-us-east-2'
+    eu-west-1:
+      BucketArn: 'unified-logging-lambda-code-eu-west-1'
+    eu-west-2:
+      BucketArn: 'unified-logging-lambda-code-eu-west-2'
+    us-west-1:
+      BucketArn: 'unified-logging-lambda-code-us-west-1'
+    us-west-2:
+      BucketArn: 'unified-logging-lambda-code-us-west-2'
+    af-south-1:
+      BucketArn: 'unified-logging-lambda-code-af-south-1'
+    ap-south-1:
+      BucketArn: 'unified-logging-lambda-code-ap-south-1'
+    ap-northeast-3:
+      BucketArn: 'unified-logging-lambda-code-ap-northeast-3'
+    ap-northeast-2:
+      BucketArn: 'unified-logging-lambda-code-ap-northeast-2'
+    ap-southeast-1:
+      BucketArn: 'unified-logging-lambda-code-ap-southeast-1'
+    ap-southeast-2:
+      BucketArn: 'unified-logging-lambda-code-ap-southeast-2'
+    ap-northeast-1:
+      BucketArn: 'unified-logging-lambda-code-ap-northeast-1'
+    ca-central-1:
+      BucketArn: 'unified-logging-lambda-code-ca-central-1'
+    ca-west-1:
+      BucketArn: 'unified-logging-lambda-code-ca-west-1'
+    eu-central-1:
+      BucketArn: 'unified-logging-lambda-code-eu-central-1'
+    eu-south-1:
+      BucketArn: 'unified-logging-lambda-code-eu-south-1'
+    eu-west-3:
+      BucketArn: 'unified-logging-lambda-code-eu-west-3'
+    eu-south-2:
+      BucketArn: 'unified-logging-lambda-code-eu-south-2'
+    eu-north-1:
+      BucketArn: 'unified-logging-lambda-code-eu-north-1'
+    eu-central-2:
+      BucketArn: 'unified-logging-lambda-code-eu-central-2'
+    me-south-1:
+      BucketArn: 'unified-logging-lambda-code-me-south-1'
+    me-central-1:
+      BucketArn: 'unified-logging-lambda-code-me-central-1'
+    ap-east-1:
+      BucketArn: 'unified-logging-lambda-code-ap-east-1'
+    ap-south-2:
+      BucketArn: 'unified-logging-lambda-code-ap-south-2'
+    ap-southeast-3:
+      BucketArn: 'unified-logging-lambda-code-ap-southeast-3'
+    ap-southeast-5:
+      BucketArn: 'unified-logging-lambda-code-ap-southeast-5'
+    ap-southeast-4:
+      BucketArn: 'unified-logging-lambda-code-ap-southeast-4'
+    il-central-1:
+      BucketArn: 'unified-logging-lambda-code-il-central-1'
+    sa-east-1:
+      BucketArn: 'unified-logging-lambda-code-sa-east-1'
+
+Resources:
+  NewRelicLogsLicenseKeySecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Condition: ShouldCreateSecret
+    Properties:
+      Description: The New Relic license key, for sending telemetry
+      Name : !Join ['-', ['nr-license-key', !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+      SecretString: !Sub '{ "LicenseKey": "${LicenseKey}"}'
+  
+  NewRelicLogsLogForwarderDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Join ['-', ['nr-lambda-dlq', !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+  
+  NewRelicLogsAttributeValidationLambda:
+    Type: 'AWS::Serverless::Function'
+    Condition: IsCommonAttributesNotBlank
+    Properties:
+      InlineCode: |
+          import json
+          import boto3
+          import cfnresponse
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def handler(event, context):
+              responseData = {}
+              common_attributes = event['ResourceProperties']['CommonAttributes']
+              logger.info(f'Validating CommonAttributes: {common_attributes}')
+
+              # Validate the JSON format
+              try:
+                  attributes = json.loads(common_attributes)
+                  if not isinstance(attributes, list):
+                      raise ValueError("CommonAttributes should be a JSON array.")
+                  for attribute in attributes:
+                      if not isinstance(attribute, dict):
+                          raise ValueError("Each element in CommonAttributes should be a JSON object.")
+                      if 'AttributeName' not in attribute or 'AttributeValue' not in attribute:
+                          raise ValueError("Each element in CommonAttributes should have 'AttributeName' and 'AttributeValue' keys.")
+                      if not attribute['AttributeName'] or not attribute['AttributeValue']:
+                          raise ValueError("Each element in CommonAttributes should have non-empty 'AttributeName' and 'AttributeValue' values.")
+
+                  responseData['UserInputCommonAttributesErrorMessages'] = 'No Errors Found in User Input for setting up custom attributes.'           
+              except Exception as e:
+                  logger.error(f'CommonAttributes provided {common_attributes} is not a valid JSON, the error is:  {str(e)}')
+                  responseData['UserInputCommonAttributesErrorMessages'] = (
+                      'Validation Failed for Input Provided. The CommonAttributes provided : {} is not a valid JSON. '
+                      'Please provide a valid JSON for CommonAttributes.'.format(common_attributes)
+                  )
+              # Send success response
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+      Handler: index.handler
+      Runtime: python3.12
+      Timeout: 120
+
+  NewRelicLogsResourceForAttributeValidation:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: IsCommonAttributesNotBlank
+    Properties:
+      ServiceToken: !GetAtt NewRelicLogsAttributeValidationLambda.Arn
+      CommonAttributes: !Ref CommonAttributes
+
+  NewRelicLogsServerlessLogForwarder:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri:
+        Bucket: !FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]
+        Key: 'new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Timeout: 900
+      MemorySize: 256
+      Architectures:
+        - x86_64
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt NewRelicLogsLogForwarderDLQ.Arn
+      Environment:
+        Variables:
+          LICENSE_KEY: !If [ShouldCreateSecret, !Ref "AWS::NoValue", !Ref LicenseKey]
+          NEW_RELIC_LICENSE_KEY_SECRET_NAME : !If [ShouldCreateSecret, !Join ['-', ['nr-license-key', !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]],!Ref "AWS::NoValue"]
+          NEW_RELIC_REGION: !Ref NewRelicRegion
+          DEBUG_ENABLED: "false"
+          CUSTOM_META_DATA: !If [IsCommonAttributesNotBlank, !Ref CommonAttributes, !Ref "AWS::NoValue"]
+      Policies:
+        - S3ReadPolicy:
+            BucketName: "*"
+        - SQSPollerPolicy:
+            QueueName: "*"
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+                - secretsmanager:DescribeSecret
+              Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*'
+
+  NewRelicLogsS3ARNConstructionLambdaIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "LambdaExecutionPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:HeadBucket'
+                  - 's3:ListBucket'
+                  - 's3:GetBucketLocation'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+  
+  NewRelicLogsS3ARNConstructionLambda:
+    Type: 'AWS::Serverless::Function'
+    Condition: AddS3Trigger
+    Properties:
+      InlineCode: |
+        import json
+        import cfnresponse
+        import boto3
+        import logging
+
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+
+        s3 = boto3.client('s3')
+
+        def handler(event, context):
+            responseData = {}
+            try:
+              if event['RequestType'] == 'Delete':
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                  return {}
+              else:
+                  bucket_details = event['ResourceProperties']['BucketNames']
+                  logger.info(f'Validating BucketNames: {bucket_details}')
+
+                  try:
+                      bucket_details_json = json.loads(bucket_details)
+                      if not isinstance(bucket_details_json, list):
+                          raise ValueError("BucketNames should be a JSON array.")
+                      for detail in bucket_details_json:
+                          if not isinstance(detail, dict):
+                              raise ValueError("Each element in BucketNames should be a JSON object.")
+                          if 'bucket' not in detail:
+                              raise ValueError("Each element in BucketNames should have 'bucket' key.")
+                          if not detail['bucket']:
+                              raise ValueError("Each element in BucketNames should have non-empty 'bucket' value.")
+                  except Exception as e:
+                      logger.error(f'BucketNames provided {bucket_details} is not a valid JSON, the error is:  {str(e)}')
+                      responseData['BucketARNs'] = ''
+                      responseData['ParentBucketARNs'] = ''
+                      responseData['S3UserInputErrorMessages'] = (
+                          'Validation Failed for Input Provided. The BucketNames provided : {} is not a valid JSON. '
+                          'Please provide a valid JSON for BucketNames.'.format(bucket_details)
+                      )
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+                      return
+
+                  current_region = context.invoked_function_arn.split(":")[3]
+
+                  bucket_arns = []
+                  parent_bucket_arns = []
+                  invalid_bucket_names = []
+
+                  for detail in bucket_details_json:
+                      bucket_name = detail['bucket'].strip()
+                      try:
+                        s3.head_bucket(Bucket=bucket_name)
+                        bucket_region = s3.get_bucket_location(Bucket=bucket_name)['LocationConstraint']
+                        if bucket_region is None:
+                          bucket_region = 'us-east-1'
+                        if bucket_region != current_region:
+                          logger.error(f'Bucket {bucket_name} is not in the same region as the lambda function')
+                          invalid_bucket_names.append(bucket_name)
+                          continue
+                      except Exception as e:
+                        logger.error(f'Bucket {bucket_name} does not exist or you do not have access to it: {str(e)}')
+                        invalid_bucket_names.append(bucket_name)
+                        continue
+                          
+                      parent_bucket_arn = f"arn:aws:s3:::{bucket_name}"
+
+                      if 'prefix' in detail and detail['prefix'].strip() != '':
+                        prefix = detail['prefix'].strip()
+                        bucket_arn = f"arn:aws:s3:::{bucket_name}/{prefix}"
+                      else:
+                        bucket_arn = f"arn:aws:s3:::{bucket_name}"
+                  
+                      parent_bucket_arns.append(parent_bucket_arn)
+                      bucket_arns.append(bucket_arn)
+
+                  responseData['BucketARNs'] = ','.join(bucket_arns)
+                  responseData['ParentBucketARNs'] = ','.join(parent_bucket_arns)
+                  responseData['S3UserInputErrorMessages'] = 'No Errors Found in User Input for setting up S3 triggers.'
+                  if invalid_bucket_names:
+                    responseData['S3UserInputErrorMessages'] = (
+                      'Validation Failed for Input Provided. These Bucket Names: [{}] do not exist in your account/region or you do not have permission to access it. '
+                      'Please setup Lambda event trigger manually for lambda resource Logical ID: "NewRelicLogsServerlessLogForwarder" with additional S3 buckets including these failed ones.'
+                      .format(','.join(invalid_bucket_names))
+                    )
+                  
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+            except Exception as e:
+              logger.error(f'Error: {str(e)}')
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)}')
+
+      Handler: index.handler
+      Runtime: python3.12
+      Timeout: 120
+      Role: !GetAtt NewRelicLogsS3ARNConstructionLambdaIAMRole.Arn
+
+  NewRelicLogsResourceForS3ARNConstruction:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: AddS3Trigger
+    Properties:
+      ServiceToken: !GetAtt NewRelicLogsS3ARNConstructionLambda.Arn
+      BucketNames: !Ref S3BucketNames
+
+  NewRelicLogsLogGroupArnConstructionLambdaIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "LambdaExecutionPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+  
+  NewRelicLogsLogGroupArnConstructionLambda:
+    Type: 'AWS::Serverless::Function'
+    Condition: AddCloudwatchTrigger
+    Properties:
+      InlineCode: | 
+          import json
+          import cfnresponse
+          import logging
+          import boto3
+
+          logs_client = boto3.client('logs')
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def handler(event, context):
+              response = {}
+              try:
+                  if event['RequestType'] == 'Delete':
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return {}
+                  else:
+                      log_group_config = event['ResourceProperties']['LogGroupConfig']
+              
+                      # Parsing LogGroupConfig JSON array
+                      try:
+                          log_group_config_json = json.loads(log_group_config)
+                          if not isinstance(log_group_config_json, list):
+                              raise ValueError("LogGroupConfig should be a JSON array.")
+                          for log_group in log_group_config_json:
+                              if not isinstance(log_group, dict):
+                                  raise ValueError("Each element in LogGroupConfig should be a JSON object.")
+                              if 'LogGroupName' not in log_group:
+                                  raise ValueError("Each element in LogGroupConfig should have 'LogGroupName' key.")
+                              if not log_group['LogGroupName']:
+                                  raise ValueError("Each element in LogGroupConfig should have non-empty 'LogGroupName' value.")
+                      except Exception as e:
+                          logger.error(f'LogGroupConfig provided {log_group_config} is not a valid JSON, the error is:  {str(e)}')
+                          response['LogGroupArns'] = ''
+                          response['InvalidLogGroups'] = ''
+                          response['UserInputCloudwatchErrorMessages'] = (
+                              'Validation Failed for Input Provided. The LogGroupConfig provided : {} is not a valid JSON. '
+                              'Please provide a valid JSON for LogGroupConfig.'.format(log_group_config)
+                          )
+                          cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
+                          return
+
+                      # Extract region and account ID from the context
+                      region = context.invoked_function_arn.split(":")[3]
+                      account_id = context.invoked_function_arn.split(":")[4]
+                      log_group_arns = []
+                      invalid_log_groups = []
+                      for log_group in log_group_config_json:
+                          log_group_name = log_group['LogGroupName']
+                          logger.info(f'Describing log group {log_group_name}')
+                          # Matches based on prefix, results in a list of log groups. Processes the list further to find the exact match.
+                          responseLogGroup = logs_client.describe_log_groups(logGroupNamePrefix=log_group_name) 
+                          doesLogGroupExist = False
+                          # Check if the log group with the exact name exists in the list of log groups
+                          for logGroup in responseLogGroup.get('logGroups', []):
+                            if logGroup['logGroupName'] == log_group_name:
+                              doesLogGroupExist = True
+                              log_group_arn = logGroup['arn']
+                              log_group_arns.append(log_group_arn)
+                              break
+                          if not doesLogGroupExist:
+                            logger.error(f'No log group exists with the name: {log_group_name}')
+                            invalid_log_groups.append(log_group_name)
+                      response['LogGroupArns'] = ','.join(log_group_arns)
+                      response['InvalidLogGroups'] = ','.join(invalid_log_groups)
+                      response['UserInputCloudwatchErrorMessages'] = "No Errors Found in User Input for setting up Cloudwatch triggers."
+                      if invalid_log_groups:
+                            response['UserInputCloudwatchErrorMessages'] = (
+                              'Validation Failed for Input Provided. These Log Groups: [{}] do not exist in your account.'
+                              'Please setup Cloudwatch to Data Firehose subscription manually for additional log groups including these failed ones to stream with the resource Logical ID: "LoggingFirehoseStreamToNewRelic".'
+                              'While setting up the subscription manuually you can use the IAM role with resource Logical ID: "CloudWatchFirehoseRole" created by this deployment.'.format(','.join(invalid_log_groups))
+                            )
+
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
+              except Exception as e:
+                  logger.error(f'Error: {str(e)}')
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)}')
+
+      Handler: index.handler
+      Runtime: python3.12
+      Timeout: 120
+      Role: !GetAtt NewRelicLogsLogGroupArnConstructionLambdaIAMRole.Arn
+
+  NewRelicLogsResourceForLogGroupArnConstruction:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: AddCloudwatchTrigger
+    Properties:
+      ServiceToken: !GetAtt NewRelicLogsLogGroupArnConstructionLambda.Arn
+      LogGroupConfig: !Ref LogGroupConfig
+
+  NewRelicLogsS3Trigger:
+    Type: 'AWS::CloudFormation::Stack'
+    Condition: AddS3Trigger
+    Properties:
+      TemplateURL: s3-trigger-stack.yaml
+      Parameters:
+        S3BucketArnsWithoutPrefix: !GetAtt NewRelicLogsResourceForS3ARNConstruction.ParentBucketARNs
+        S3BucketArns: !GetAtt NewRelicLogsResourceForS3ARNConstruction.BucketARNs
+        LambdaFunctionArn: !GetAtt NewRelicLogsServerlessLogForwarder.Arn
+
+  NewRelicLogsCloudWatchTrigger:
+    Type: 'AWS::CloudFormation::Stack'
+    Condition: AddCloudwatchTrigger
+    Properties:
+      TemplateURL: lambda-cloudwatch-trigger-stack.yaml
+      Parameters:
+        LogGroupArns: !GetAtt NewRelicLogsResourceForLogGroupArnConstruction.LogGroupArns
+        LogGroupConfig: !Ref LogGroupConfig
+        LambdaFunctionArn: !GetAtt NewRelicLogsServerlessLogForwarder.Arn
+        InvalidLogGroups: !GetAtt NewRelicLogsResourceForLogGroupArnConstruction.InvalidLogGroups
+
+Outputs:
+  NewRelicLogsLambdaFunctionArn:
+    Description: The ARN of the Lambda function.
+    Value: !GetAtt NewRelicLogsServerlessLogForwarder.Arn
+  NewRelicLogsUserInputS3Errors:
+    Description: Contains Details about Errors in User Input for setting up S3 triggers in lambda.
+    Condition: AddS3Trigger
+    Value: !GetAtt NewRelicLogsResourceForS3ARNConstruction.S3UserInputErrorMessages
+  NewRelicLogsUserInputCloudwatchErrors:
+    Description: Contains Details about Errors in User Input for setting up Cloudwatch triggers in lambda.
+    Condition: AddCloudwatchTrigger
+    Value: !GetAtt NewRelicLogsResourceForLogGroupArnConstruction.UserInputCloudwatchErrorMessages
+  NewRelicLogsUserInputCommonAttributeErrors:
+    Description: Contains Details about Errors in User Input for setting up Common Attributes in lambda.
+    Condition: IsCommonAttributesNotBlank
+    Value: !GetAtt NewRelicLogsResourceForAttributeValidation.UserInputCommonAttributesErrorMessages

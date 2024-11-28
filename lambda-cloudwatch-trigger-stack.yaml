@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  LogGroupArns:
+    Description: "Comma-separated list of CloudWatch Log Group ARNs to trigger the Lambda function."
+    Type: CommaDelimitedList
+  LogGroupConfig:
+    Description: "JSON array of objects representing your LogGroup and Filters (if applicable). For example: [{\"LogGroupName\":\"logGroup1\",\"FilterPattern\":\"filter1\"}]"
+    Type: String
+  InvalidLogGroups:
+    Description: "Comma-separated list of CloudWatch Log Groups provided in use input which are invalid and should be skipped."
+    Type: CommaDelimitedList
+  LambdaFunctionArn:
+    Type: String
+    Description: Lambda arn to add event trigger
+
+
+Conditions:
+  HasValidLogGroups: !Not [!Equals [!Select [0, !Ref LogGroupArns], ""]]
+
+Resources:
+  NewRelicLogsCloudWatchLambdaLogGroupTriggers:
+    Type: 'Custom::CloudWatchNotifications'
+    Condition: HasValidLogGroups
+    Properties:
+      ServiceToken: !GetAtt NewRelicLogsCloudWatchLambda.Arn
+      LambdaFunctionArn: !Ref LambdaFunctionArn
+      LogGroupConfig: !Ref LogGroupConfig
+      InvalidLogGroups: !Ref InvalidLogGroups
+
+  NewRelicLogsCloudWatchLambdaIAMRole:
+    Type: "AWS::IAM::Role"
+    Condition: HasValidLogGroups
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "LambdaExecutionPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutSubscriptionFilter
+                  - lambda:AddPermission
+                Resource: !Ref LogGroupArns
+              - Effect: Allow
+                Action:
+                  - 'lambda:AddPermission'
+                Resource: !Ref LambdaFunctionArn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+
+  NewRelicLogsCloudWatchLambda:
+    Type: 'AWS::Lambda::Function'
+    Condition: HasValidLogGroups
+    Properties:
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          import logging
+          import hashlib
+          import time
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+
+          lambda_client = boto3.client('lambda')
+          log_client = boto3.client('logs')
+          
+          def lambda_handler(event, context):
+              response = {}
+              try:
+                  request_type = event['RequestType']
+                  event_data = event['ResourceProperties']
+                  lambda_arn = event_data.get('LambdaFunctionArn', '')
+                  invalid_log_groups = set(event_data.get('InvalidLogGroups', []))
+                  log_group_config_str = event_data.get('LogGroupConfig', [])
+
+                  region = lambda_arn.split(':')[3]
+                  account_id = lambda_arn.split(':')[4]
+
+                  # Parsing LogGroupConfig JSON array
+                  log_group_config = json.loads(log_group_config_str)
+                  
+                  if request_type in ['Create', 'Update']:
+                      for log_group in log_group_config:
+                          log_group_name = log_group['LogGroupName']
+                          if log_group_name in invalid_log_groups:
+                              logger.info(f'Log group {log_group_name} is invalid. Skipping...')
+                              continue
+                          filter_pattern = log_group['FilterPattern'] if 'FilterPattern' in log_group else ''
+
+                          # Log group ARN format: arn:aws:logs:region:account-id:log-group:log-group-name
+                          # Example: arn:aws:logs:us-east-2:1234567890:log-group:Test:*
+                          log_group_arn = f'arn:aws:logs:{region}:{account_id}:log-group:{log_group_name}:*'
+
+                          add_permission_if_needed(event,context,lambda_arn, log_group_arn, log_group_name)
+
+                          # Retry logic for PutSubscriptionFilter                       
+                          max_retries = 5
+                          initial_backoff_time_in_seconds = 1                     
+                          backoff_multiplier = 2
+                          backoff_time_in_seconds = initial_backoff_time_in_seconds
+                          for attempt in range(max_retries):
+                              try:
+                                  response = log_client.put_subscription_filter(
+                                      logGroupName=log_group_name,
+                                      filterName='LambdaSubscription',
+                                      filterPattern=filter_pattern,
+                                      destinationArn=lambda_arn
+                                  )
+                                  break
+                              except log_client.exceptions.InvalidParameterException as e:
+                                  logger.info(f'Attempt {attempt + 1} to put subscription filter failed: {str(e)}')
+                                  if attempt < max_retries - 1:
+                                      logger.info(f'Retrying in {backoff_time_in_seconds} seconds...')
+                                      time.sleep(backoff_time_in_seconds)
+                                      backoff_time_in_seconds *= backoff_multiplier
+                                  else:
+                                      cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)} - logGroupName: {logGroupName}')
+
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
+              except Exception as e:
+                  logger.error(f'Error: {str(e)}')
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)} - LogGroupArn: {log_group_arn}')
+          
+          def add_permission_if_needed(event, context,lambda_arn, log_group_arn, log_group_name):
+              try:
+                  # Create a hash of the log group name to ensure uniqueness and shorten it
+                  hash_object = hashlib.sha256(log_group_name.encode())
+                  short_log_group_name = hash_object.hexdigest()[:12]  # Use the first 12 characters of the hash
+                  statement_id = f"AllowCWLogs_{short_log_group_name}"
+
+                  lambda_client.add_permission(
+                      Action="lambda:InvokeFunction",
+                      FunctionName=lambda_arn,
+                      Principal="logs.amazonaws.com",
+                      SourceArn=f"{log_group_arn}",
+                      StatementId=statement_id
+                  )
+              except lambda_client.exceptions.ResourceConflictException:
+                  logger.info(f'Permission already exists for {log_group_arn}')
+                  pass
+              except Exception as e:
+                  logger.error(f'Error: {str(e)}')
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)} -  LogGroupArn: {log_group_arn}')               
+
+      Handler: index.lambda_handler
+      Role: !GetAtt NewRelicLogsCloudWatchLambdaIAMRole.Arn
+      Runtime: python3.12
+      Timeout: 120

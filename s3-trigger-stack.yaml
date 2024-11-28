@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  S3BucketArnsWithoutPrefix:
+    Type: CommaDelimitedList
+    Description: S3 bucket Arns without Prefix
+  S3BucketArns:
+    Type: CommaDelimitedList
+    Description: Arns to S3 buckets which needs to be added as trigger to lambda
+  LambdaFunctionArn:
+    Type: String
+    Description: Lambda arn to add event trigger
+
+Conditions:
+  HasValidS3Buckets: !Not [!Equals [!Select [0, !Ref S3BucketArnsWithoutPrefix], ""]]
+
+Resources:
+  NewRelicLogsS3BucketTriggerResource:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: HasValidS3Buckets
+    Properties:
+      ServiceToken: !GetAtt NewRelicLogsS3BucketTriggerLambda.Arn
+      LambdaFunctionArn: !Ref LambdaFunctionArn
+      S3BucketArns: !Ref S3BucketArns
+      S3BucketArnsWithoutPrefix: !Ref S3BucketArnsWithoutPrefix
+
+  NewRelicLogsS3BucketTriggerIAMRole:
+    Type: "AWS::IAM::Role"
+    Condition: HasValidS3Buckets
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "LambdaExecutionPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:PutBucketNotification'
+                  - 's3:GetBucketNotification'
+                Resource: !Ref S3BucketArnsWithoutPrefix
+              - Effect: Allow
+                Action:
+                  - 'lambda:AddPermission'
+                Resource: !Ref LambdaFunctionArn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+
+  NewRelicLogsS3BucketTriggerLambda:
+    Type: 'AWS::Lambda::Function'
+    Condition: HasValidS3Buckets
+    Properties:
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          s3 = boto3.client('s3')
+          lambda_client = boto3.client('lambda')
+          
+          def lambda_handler(event, context):
+              response = {}
+              try:
+                  if event['RequestType'] == 'Delete':
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return {}
+                  
+                  else:
+                      event_data = event['ResourceProperties']
+          
+                      lambda_arn = event_data.get('LambdaFunctionArn', '')
+                      buckets = event_data.get('S3BucketArns', [])
+                      bucket_where_trigger_exists = []
+                      for bucket_arn in buckets:
+
+                          # Split the ARN to get the bucket name and prefix
+                          parts = bucket_arn.split(":::")[-1].split("/", 1)
+                          bucket_name = parts[0]
+                          prefix = parts[1] if len(parts) > 1 else ''
+
+                          add_permission_if_needed(lambda_arn, bucket_name)
+
+                          # get the existing notification configuration
+                          existing_config = s3.get_bucket_notification_configuration(Bucket=bucket_name)
+
+                          triggerEvents = ['s3:ObjectCreated:*']
+                          new_lambda_config = {
+                              'LambdaFunctionArn': lambda_arn,
+                              'Events': triggerEvents
+                          }
+                          if prefix:
+                              new_lambda_config['Filter'] = {
+                                  'Key': {
+                                      'FilterRules': [
+                                          {
+                                              'Name': 'prefix',
+                                              'Value': prefix
+                                          }
+                                      ]
+                                  }
+                              }
+
+                          # Check if the configuration already exists
+                          existing_lambda_configs = existing_config.get('LambdaFunctionConfigurations', [])
+
+                          config_exists = False
+                          for config in existing_lambda_configs:
+                              existing_prefix = config.get("Filter", {}).get("Key", {}).get("FilterRules", [{}])[0].get("Value", "")
+
+                              # We are checking below conditions to determine if the existing configuration applies to the new configuration:
+                              # 1. No Prefix: If the existing configuration has no prefix, it applies to the entire bucket.
+                              # 2. Exact Prefix Match: If the existing prefix matches the new prefix exactly.
+                              # 3. Existing Prefix is a Parent: If the existing prefix is a parent of the new prefix.
+                              # 4. New Prefix is a Parent: If the new prefix is a parent of the existing prefix.
+
+                              if config.get('Events') == triggerEvents and (existing_prefix == "" or
+                                existing_prefix == prefix or existing_prefix.startswith(prefix) or prefix.startswith(existing_prefix)):                          
+                                  config_exists = True
+                                  bucket_where_trigger_exists.append(bucket_arn)
+                                  break
+                          
+                          if not config_exists:
+                              combined_lamda_config = existing_lambda_configs + [new_lambda_config]                            
+
+                              notification_config = {
+                                  'LambdaFunctionConfigurations': combined_lamda_config
+                              }                     
+
+                              s3.put_bucket_notification_configuration(
+                                  Bucket=bucket_name,
+                                  NotificationConfiguration=notification_config
+                              )
+
+                      response['S3TriggerSetupErrorMsg'] = 'No Errors Found in S3 Trigger Setup'
+                      if bucket_where_trigger_exists:
+                          response['S3TriggerSetupErrorMsg'] = (
+                          'S3 bucket trigger could not be created for these Bucket arns: [{}] , these buckets already have the trigger setup'
+                          .format(','.join(bucket_where_trigger_exists))
+                          )
+
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
+              except Exception as e:
+                  logger.error(f'Error: {str(e)}')
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)} ')
+          
+          def add_permission_if_needed(lambda_arn, bucket_name):
+              try:
+                  lambda_client.add_permission(
+                      FunctionName=lambda_arn,
+                      StatementId=f's3-permission-{bucket_name}',
+                      Action='lambda:InvokeFunction',
+                      Principal='s3.amazonaws.com',
+                      SourceArn=f'arn:aws:s3:::{bucket_name}',
+                  )
+              except lambda_client.exceptions.ResourceConflictException:
+                  logger.info(f'Permission already exists for {bucket_name}')
+                  pass
+              except Exception as e:
+                  logger.error(f'Error: {str(e)}')
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)} - bucket_name: {bucket_name}')
+      Handler: index.lambda_handler
+      Role: !GetAtt NewRelicLogsS3BucketTriggerIAMRole.Arn
+      Runtime: python3.12
+      Timeout: 120
+  
+Outputs:
+  NewRelicLogsS3TriggerSetupErrors:
+    Condition: HasValidS3Buckets
+    Description: Contains Details about Errors in S3 Trigger Setup
+    Value: !GetAtt NewRelicLogsS3BucketTriggerResource.S3TriggerSetupErrorMsg

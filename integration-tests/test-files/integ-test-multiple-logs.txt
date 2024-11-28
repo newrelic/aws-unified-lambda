@@ -1,0 +1,2 @@
+This is txt file with multiple lines - line 1
+This is txt file with multiple lines - line 2

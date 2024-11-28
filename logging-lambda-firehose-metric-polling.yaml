@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: New Relic Template to forward logs using firehose/S3 bucket and metrics using polling from AWS to New Relic
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: NewRelic-log-forwarding
+    Description: Send log data from AWS to New Relic.
+    Author: New Relic
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: LICENSE.txt
+    ReadmeUrl: README.md
+    HomePageUrl: https://github.com/newrelic/aws-unified-logging #TODO change this url once the repo is public
+    SemanticVersion: 0.0.17
+    SourceCodeUrl: https://github.com/newrelic/aws-unified-logging #TODO change this url once the repo is public
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: 'AWS Integration configuration'
+        Parameters:
+          - NewRelicAccountId
+          - NewRelicRegion
+          - NewRelicLicenseKey          
+      -
+        Label:
+          default: 'AWS Metrics Polling Configuration'
+        Parameters:
+          - IntegrationName
+          - IAMRoleName
+          - NewRelicAPIKey
+          - PollingIntegrationSlugs
+      -
+        Label:
+          default: 'AWS Logging Configuration'
+        Parameters:
+          - LogGroupConfig
+          - S3BucketNames
+          - CommonAttributes
+          - LoggingFirehoseStreamName
+          - LoggingS3BackupBucketName
+          - EnableCloudWatchLoggingForFirehose
+          - StoreNRLicenseKeyInSecretManager          
+
+    ParameterLabels:
+      IntegrationName:
+        default: 'Name of integration in NewRelic'
+      NewRelicAccountId:
+        default: 'NewRelic account ID'
+      IAMRoleName:
+        default: 'Role name for NewRelic'
+      NewRelicAPIKey:
+        default: 'NewRelic API Key'
+      NewRelicRegion:
+        default: 'New Relic Datacenter Region'
+      NewRelicLicenseKey:
+        default: 'New Relic Ingest License Key'
+      LogGroupConfig:
+        default: 'Log Groups name & filter (if applicable)'        
+      S3BucketNames:
+        default: 'S3 bucket Names & Prefix (if applicable)'
+      CommonAttributes:
+        default: 'Common Attributes to be added to the log events'   
+      LoggingFirehoseStreamName:
+        default: 'Name of Logging Firehose Delivery Stream'
+      LoggingS3BackupBucketName:
+        default: 'S3 Bucket Destination for failed Logging events'
+      EnableCloudWatchLoggingForFirehose:
+        default: 'Enables CloudWatch logging for Logging Firehose stream'
+      StoreNRLicenseKeyInSecretManager:
+        default: 'Store New Relic License Key in AWS Secrets Manager'
+
+Parameters:
+  IAMRoleName:
+    Description: Customize the base name of IAM role for New relic AWS integration (the final role name will contain some id at the end)
+    Type: String
+    Default: NewRelicInfrastructure-Integrations
+  NewRelicAccountId: 
+    Type: String
+    Description: Id of the account in New relic
+    AllowedPattern: "[0-9]+"
+    ConstraintDescription: must only contain numbers
+  NewRelicRegion:
+    Type: String
+    Description: Datacenter where the data will be sent (US/EU), DO NOT TOUCH
+    AllowedValues: [US, EU]
+    Default: US
+  IntegrationName:
+    Type: String
+    Description: Name of the AWS integration that will be created in New relic
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: "[a-zA-Z0-9_-]+"
+    ConstraintDescription: must only container letters (uppercase and lowercase), numbers, and characters '_', and '-' with max length of 255 total characters
+  NewRelicAPIKey:
+    Type: String
+    Description: New relic user key to use NerdGraph, our GraphQL API, create or get an existing key in https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher
+    NoEcho: true
+    MaxLength: 40
+    AllowedPattern: "^[^\\s]+$"
+    ConstraintDescription: "The parameter value cannot be empty, contain spaces, and must be alphanumeric and can contain symbols."
+  PollingIntegrationSlugs:
+    Type: CommaDelimitedList
+    Description: "Comma-delimited list of the polling integrations to configure"
+  NewRelicLicenseKey:
+    Type: String
+    Description: New relic license key, create or get and existing key in https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher
+    NoEcho: true
+    MaxLength: 40
+    AllowedPattern: "^[^\\s]+$"
+    ConstraintDescription: "The parameter value cannot be empty, contain spaces, and must be alphanumeric and can contain symbols."
+  S3BucketNames:
+    Type: String
+    Description: "JSON array of objects representing your S3Bucketname and prefixes (if applicable) For example: [{\"bucket\":\"bucket1\",\"prefix\":\"prefix/\"}]"
+    Default: ""
+  LogGroupConfig:
+    Description: "JSON array of objects representing your LogGroup and Filters (if applicable). For example: [{\"LogGroupName\":\"logGroup1\",\"FilterPattern\":\"filter1\"}]"
+    Type: String
+  CommonAttributes:
+    Type: String
+    Description: "JSON array of objects representing your custom attributes. For example: [{\"AttributeName\":\"key1\",\"AttributeValue\":\"value1\"}]"
+    Default: ""
+  LoggingFirehoseStreamName:
+    Type: String
+    Description: Name of new Data Firehose Delivery Stream (must be unique per AWS account in the same AWS Region)
+    Default: NewRelic-Logging-Delivery-Stream
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z0-9_.-]+"
+    ConstraintDescription: must only contain letters (uppercase and lowercase), numbers, and characters '.', '_', and '-' with max length of 64 total characters
+  LoggingS3BackupBucketName:
+    Type: String
+    Description: S3 Bucket Destination for failed events (must be globally unique across all AWS accounts in all AWS Regions within a partition)
+    Default: firehose-logging-backup
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: (?!(^xn--|-s3alias$))^[a-z0-9.][a-z0-9-.]{1,61}[a-z0-9.]$
+    ConstraintDescription: must adhere to the S3 bucket naming rules - https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+  EnableCloudWatchLoggingForFirehose:
+    Type: String
+    Description: Enables CloudWatch logging for the Firehose stream.
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+  StoreNRLicenseKeyInSecretManager:
+    Type: String
+    Description: Should we store the New Relic license key in AWS Secrets Manager. Defaults to true.
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"       
+
+Resources: 
+  NewRelicLogsLoggingLambdaFirehose:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: logging-lambda-firehose-template.yaml
+      Parameters:
+        LicenseKey: !Ref NewRelicLicenseKey
+        NewRelicRegion: !Ref NewRelicRegion
+        NewRelicAccountId: !Ref NewRelicAccountId
+        S3BucketNames: !Ref S3BucketNames
+        LogGroupConfig: !Ref LogGroupConfig
+        CommonAttributes: !Ref CommonAttributes
+        LoggingFirehoseStreamName: !Ref LoggingFirehoseStreamName
+        LoggingS3BackupBucketName: !Ref LoggingS3BackupBucketName
+        EnableCloudWatchLoggingForFirehose: !Ref EnableCloudWatchLoggingForFirehose
+        StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
+
+  # New Relic Metrics Polling Stack
+  NewrelicMetricsPollingStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nr-downloads-main.s3.amazonaws.com/cloud_integrations/aws/cloudformation/newrelic-cloudformation-polling.yml
+      Parameters:
+        IAMRoleName: !Ref IAMRoleName
+        NewRelicAccountId: !Ref NewRelicAccountId
+        NewRelicRegion: !Ref NewRelicRegion
+        IntegrationName: !Ref IntegrationName
+        NewRelicAPIKey: !Ref NewRelicAPIKey
+        PollingIntegrationSlugs: !Join [ "," ,!Ref PollingIntegrationSlugs ]

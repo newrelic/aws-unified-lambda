@@ -1,0 +1,130 @@
+name: Pull Request Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-template-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Install golint
+        run: |
+          go install golang.org/x/lint/golint@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Lint Go Code
+        run: |
+            # Find all .go files, excluding the vendor directory
+            go_files=$(find . -name "*.go" -not -path "./vendor/*" -not -path "./src/vendor/*")
+            
+            # Run golint on each Go file
+            lint_output=""
+            for file in $go_files; do
+              output=$(golint $file)
+              if [ -n "$output" ]; then
+                lint_output="$lint_output\n$output"
+              fi
+            done
+  
+            if [ -n "$lint_output" ]; then
+              echo "Linting issues found:"
+              echo -e "$lint_output"
+              exit 1
+            else
+              echo "No linting issues found."
+            fi
+      - name: Run gofmt
+        run: |
+          # Find all .go files and check if they are properly formatted
+          unformatted=$(gofmt -l $(find . -name "*.go" -not -path "./src/vendor/*"))
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not formatted:"
+            echo "$unformatted"
+            exit 1
+          else
+            echo "All files are properly formatted."
+          fi
+      
+      - name: Validate SAM Templates
+        run: |
+          for template in $(find . -name ".yaml" -o -name ".yml"); do
+          echo "Validating template: $template"
+          sam validate --template-file "$template" --region us-east-2 --lint
+          done
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run CFN Nag Security Checks
+        uses: stelligent/cfn_nag@master
+        with:
+          input_path: .
+          extra_args: -o sarif
+          output_path: cfn_nag.sarif
+      - name: Upload CFN Nag SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cfn_nag.sarif    
+          category: security
+                                 
+  trivy-scan:
+    name: Trivy security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in repo mode for Low Priority
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          severity: 'LOW,MEDIUM'
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
+      - name: Run Trivy vulnerability scanner in repo mode for High Priority
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          exit-code: 1
+          severity: 'HIGH,CRITICAL'
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
+
+  test-and-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      #scripts to include the integration and end to end tests should be added here
+      - name: Run Test Cases and Coverage
+        run: |
+          cd src
+          mkdir -p coverage
+          go test -race -coverprofile=coverage/coverage.out ./...
+          go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: src/coverage/coverage.html
