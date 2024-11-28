@@ -26,15 +26,49 @@ jobs:
           role-to-assume: ${{ secrets.AWS_SAR_PUBLISHER_ROLE }}
           aws-region: us-east-2
 
+      - name: Build and Package Go executable
+        run: |
+          cd src
+          GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
+          zip -r ../new-relic-log-forwarder.zip .
+
+      - name: Upload lambda code to S3 buckets in all AWS region
+        env:
+          file_to_upload: new-relic-log-forwarder.zip
+        run: |
+          regions=("us-east-1" "us-east-2" "eu-west-1" "eu-west-2")
+          #"us-west-1" "us-west-2" "af-south-1" "ap-east-1" "ap-south-2" "ap-southeast-3" "ap-southeast-5" "ap-southeast-4" "ap-south-1" "ap-northeast-3" "ap-northeast-2" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "ca-central-1" "ca-west-1" "eu-central-1" "eu-south-1" "eu-west-3" "eu-south-2" "eu-north-1" "eu-central-2" "me-south-1" "me-central-1" "il-central-1" "sa-east-1")
+          for region in "${regions[@]}"; do
+            bucket_name="unified-lambda-logging-${region}"
+            aws s3 cp "$file_to_upload" "s3://$bucket_name/new-relic-log-forwarder-folder/" --region "$region"
+          done
+
       - name: Install AWS SAM CLI
         run: |
           pip install aws-sam-cli
 
-      - name: Build SAM Application
-        run: sam build --template-file template.yaml --region us-east-2
-
-      - name: Package SAM Application
-        run: sam package --s3-bucket unified-lambda-cft-1 --output-template-file packaged.yaml --region us-east-2
-# should we include retries as part of uploading?
-      - name: Upload CloudFormation Template to S3
-        run: aws s3 cp packaged.yaml s3://unified-lambda-serverless-1/packaged.yaml
+      - name: Build and Package SAM Application and Upload to S3
+        env:
+          bucket_name: anusha-test-ansuha
+        run: |
+          BUILD_DIR_BASE=".aws-sam/build"
+          TEMPLATES=(
+            "logging-lambda-metric-polling.yaml"
+            "logging-lambda-metric-stream.yaml"
+            "logging-firehose-metric-polling.yaml"
+            "logging-firehose-metric-stream.yaml"
+            "logging-lambda-firehose-metric-polling.yaml"
+            "logging-lambda-firehose-metric-stream.yaml"
+            "lambda-template.yaml"
+            "logging-lambda-firehose-template.yaml"
+          )
+          
+          for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
+            BASE_NAME=$(basename "$TEMPLATE_FILE" .yaml)
+            BUILD_DIR="$BUILD_DIR_BASE/$BASE_NAME"
+          
+            sam build --template-file "$TEMPLATE_FILE" --build-dir "$BUILD_DIR"
+            sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE" --region us-east-1
+          
+            aws s3 cp "$BUILD_DIR/$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
+          done
