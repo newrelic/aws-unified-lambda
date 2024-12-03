@@ -4,6 +4,7 @@ package util
 import (
 	"encoding/json"
 	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"time"
 )
 
 // SplitLargeMessages splits a large message into smaller messages if its length exceeds the maximum message size.
@@ -57,4 +58,38 @@ func ProduceMessageToChannel(channel chan common.DetailedLogsBatch, currentBatch
 		},
 		Entries: currentBatch,
 	}}
+}
+
+// CloudTrailRecords represents a list of CloudTrail records.
+type CloudTrailRecords struct {
+	Records []map[string]interface{} `json:"Records"`
+}
+
+// ParseCloudTrailEvents parses a CloudTrail message and returns a list of log records as strings.
+func ParseCloudTrailEvents(message string) ([]string, error) {
+	var cloudTrailRecords CloudTrailRecords
+	err := json.Unmarshal([]byte(message), &cloudTrailRecords)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Serialize each record into a JSON string.
+	var records []string
+	for _, record := range cloudTrailRecords.Records {
+		if record["eventTime"] != nil {
+			parsedTime, err := time.Parse(time.RFC3339, record["eventTime"].(string))
+			if err == nil {
+				record["timestamp"] = parsedTime.UnixMilli()
+			}
+		}
+
+		recordJSON, err := json.Marshal(record)
+		if err != nil {
+			log.Errorf("Error marshaling record to JSON: %v while parsing %v", err, record)
+			continue
+		}
+		records = append(records, string(recordJSON))
+	}
+	return records, nil
 }
