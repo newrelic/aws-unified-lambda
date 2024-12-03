@@ -17,8 +17,8 @@ const (
 	ExecutableFileName = "main"
 	// NewRelicRegion region where lambda is deployed
 	NewRelicRegion = "US"
-	// LogObjectURI parameter of entity synthesis
-	LogObjectURI = "logObjectURI"
+	// LogObjectKey parameter of entity synthesis
+	LogObjectKey = "logObjectKey"
 	// FetchLogsTimeRange time range used in query to fetch logs
 	FetchLogsTimeRange = "30 seconds"
 	// NoOfRetriesForEventCreation number of retries while creating resources
@@ -46,7 +46,7 @@ type LogEvent struct {
 	InstrumentationName     string `json:"instrumentation.name"`
 	InstrumentationProvider string `json:"instrumentation.provider"`
 	LogBucketName           string `json:"logBucketName"`
-	LogObjectURI            string `json:"logObjectURI"`
+	LogObjectKey            string `json:"logObjectKey"`
 	Message                 string `json:"message"`
 	NewRelicLogPattern      string `json:"newrelic.logPattern"`
 	NewRelicSource          string `json:"newrelic.source"`

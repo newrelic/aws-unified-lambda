@@ -3,18 +3,19 @@ package helpers
 import (
 	"bytes"
 	"encoding/json"
-	integrationtests "github.com/newrelic/aws-unified-lambda-logging/common"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
+
+	integrationtests "github.com/newrelic/aws-unified-lambda-logging/common"
 )
 
 // FetchLogsFromNewRelic function to fetch logs
 func FetchLogsFromNewRelic(userKey, accountID, fileName string) ([]integrationtests.LogEvent, error) {
 	// setup
 	accountIDTemp, _ := strconv.ParseInt(accountID, 10, 32)
-	nrqlQuery := "SELECT * FROM Log SINCE " + integrationtests.FetchLogsTimeRange + " ago WHERE " + integrationtests.LogObjectURI + " LIKE '" + fileName + "'"
+	nrqlQuery := "SELECT * FROM Log SINCE " + integrationtests.FetchLogsTimeRange + " ago WHERE " + integrationtests.LogObjectKey + " LIKE '" + fileName + "'"
 	variables := map[string]interface{}{
 		"id":   int(accountIDTemp),
 		"nrql": nrqlQuery,
