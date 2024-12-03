@@ -80,7 +80,7 @@ func ParseCloudTrailEvents(message string) ([]string, error) {
 		if record["eventTime"] != nil {
 			parsedTime, err := time.Parse(time.RFC3339, record["eventTime"].(string))
 			if err == nil {
-				record["timestamp"] = parsedTime.Unix()
+				record["timestamp"] = parsedTime.UnixMilli()
 			}
 		}
 

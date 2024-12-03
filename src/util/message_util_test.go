@@ -159,12 +159,12 @@ func TestParseCTEvents(t *testing.T) {
 			name: "Valid CloudTrail message",
 			message: `{
 				"Records": [
-					{"eventVersion": "1.05", "eventName": "ConsoleLogin"},
+					{"eventVersion": "1.05", "eventName": "ConsoleLogin", "eventTime" : "2024-12-03T08:38:47Z"},
 					{"eventVersion": "1.05", "eventName": "StartInstances"}
 				]
 			}`,
 			want: []map[string]interface{}{
-				{"eventVersion": "1.05", "eventName": "ConsoleLogin"},
+				{"eventVersion": "1.05", "eventName": "ConsoleLogin", "eventTime": "2024-12-03T08:38:47Z", "timestamp": float64(1733215127000)},
 				{"eventVersion": "1.05", "eventName": "StartInstances"},
 			},
 			wantErr: false,

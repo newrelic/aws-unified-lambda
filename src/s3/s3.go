@@ -110,7 +110,6 @@ func buildMeltLogsFromS3Bucket(ctx context.Context, bucketName string, objectNam
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		//messages := util.SplitLargeMessages(line)
 		var messages []string
 		if isCloudTrailLog {
 			messages, err = util.ParseCloudTrailEvents(line)
