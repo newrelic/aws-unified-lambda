@@ -8,6 +8,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -79,6 +80,11 @@ func fetchS3Reader(ctx context.Context, bucketName string, objectName string, s3
 // buildMeltLogsFromS3Bucket reads the contents of an S3 object line by line,
 // splits large messages, and produces log data batches to a channel.
 func buildMeltLogsFromS3Bucket(ctx context.Context, bucketName string, objectName string, channel chan common.DetailedLogsBatch, attributes common.LogAttributes, s3Client ObjectClient, readerFactory ReaderFactory) error {
+	if isCloudTrailDigest(objectName) {
+		log.Debugf("Skipping CloudTrail digest file %s in bucket %s", objectName, bucketName)
+		return nil
+	}
+
 	s3Reader, err := fetchS3Reader(ctx, bucketName, objectName, s3Client)
 	if err != nil {
 		return err
@@ -92,8 +98,10 @@ func buildMeltLogsFromS3Bucket(ctx context.Context, bucketName string, objectNam
 
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(make([]byte, 0, common.MaxBufferSize), common.MaxBufferSize)
-	batchSize := 0
 
+	isCloudTrailLog := isCloudTrail(objectName)
+
+	batchSize := 0
 	messageCount := 0
 
 	var currentBatch common.LogData
@@ -102,7 +110,17 @@ func buildMeltLogsFromS3Bucket(ctx context.Context, bucketName string, objectNam
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		messages := util.SplitLargeMessages(line)
+		//messages := util.SplitLargeMessages(line)
+		var messages []string
+		if isCloudTrailLog {
+			messages, err = util.ParseCloudTrailEvents(line)
+			if err != nil {
+				log.Errorf("failed to parse CloudTrail events: %v", err)
+				return err
+			}
+		} else {
+			messages = util.SplitLargeMessages(line)
+		}
 
 		for _, message := range messages {
 			entry := common.Log{
@@ -133,6 +151,22 @@ func buildMeltLogsFromS3Bucket(ctx context.Context, bucketName string, objectNam
 	}
 
 	return nil
+}
+
+// isCloudTrail checks whether the log file specified by the key is a CloudTrail log based on a regex pattern.
+// If no pattern is provided,
+// it uses the default pattern or one from the environment variable S3_CLOUD_TRAIL_LOG_PATTERN.
+func isCloudTrail(key string) bool {
+	regexPattern := common.CloudTrailRegex
+	matched, _ := regexp.MatchString(regexPattern, key)
+	return matched
+}
+
+// isCloudTrailDigest checks whether the log file specified by the key is a CloudTrail digest based on a regex pattern.
+func isCloudTrailDigest(key string) bool {
+	regexPattern := common.CloudTrailDigestRegex
+	matched, _ := regexp.MatchString(regexPattern, key)
+	return matched
 }
 
 // DefaultReaderFactory returns an io.Reader that can be used to read the contents of the input file.

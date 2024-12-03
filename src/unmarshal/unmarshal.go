@@ -25,7 +25,7 @@ type Event struct {
 
 // UnmarshalJSON unmarshals the JSON data into the Event struct.
 func (event *Event) UnmarshalJSON(data []byte) error {
-	log.Infof(string(data[:]))
+	log.Debugf("event : %v", string(data[:]))
 	var err error
 
 	// Try to unmarshal the event as CloudwatchLogsEvent

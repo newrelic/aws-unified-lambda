@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"github.com/newrelic/aws-unified-lambda-logging/common"
 	"github.com/stretchr/testify/assert"
 	"reflect"
@@ -143,4 +144,68 @@ func TestProduceMessageToChannel(t *testing.T) {
 
 	// Close the channel
 	close(channel)
+}
+
+// / TestParseCTEvents tests the ParseCloudTrailEvents function with different CloudTrail messages.
+func TestParseCTEvents(t *testing.T) {
+	// Define test cases
+	tests := []struct {
+		name    string
+		message string
+		want    []map[string]interface{} // Use a slice of maps for the expected result
+		wantErr bool
+	}{
+		{
+			name: "Valid CloudTrail message",
+			message: `{
+				"Records": [
+					{"eventVersion": "1.05", "eventName": "ConsoleLogin"},
+					{"eventVersion": "1.05", "eventName": "StartInstances"}
+				]
+			}`,
+			want: []map[string]interface{}{
+				{"eventVersion": "1.05", "eventName": "ConsoleLogin"},
+				{"eventVersion": "1.05", "eventName": "StartInstances"},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "Invalid CloudTrail message",
+			message: `{"Records": "not an array"}`,
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Empty CloudTrail message",
+			message: `{"Records": []}`,
+			want:    nil,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotJSONStrings, err := ParseCloudTrailEvents(tt.message)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseCloudTrailEvents error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Unmarshal the JSON strings back into maps for comparison
+			var got []map[string]interface{}
+			for _, jsonString := range gotJSONStrings {
+				var record map[string]interface{}
+				if err := json.Unmarshal([]byte(jsonString), &record); err != nil {
+					t.Errorf("Error unmarshaling result JSON: %v", err)
+					return
+				}
+				got = append(got, record)
+			}
+
+			// Compare the resulting maps
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseCloudTrailEvents got = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/dsnet/compress/bzip2"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -66,6 +68,39 @@ func generateLogOnSize(size int) string {
 	return strings.Repeat("a", size)
 }
 
+// CloudTrailRecord represents the structure of a CloudTrail event.
+type CloudTrailTestRecord struct {
+	EventVersion string `json:"eventVersion"`
+	EventName    string `json:"eventName"`
+	EventTime    string `json:"eventTime"`
+	AWSRegion    string `json:"awsRegion"`
+}
+
+// CloudTrailRecords represents the structure of the JSON containing the "Records" array.
+type CloudTrailRecords struct {
+	Records []CloudTrailTestRecord `json:"Records"`
+}
+
+// generateCloudTrailLogs creates a CloudTrail log with a specified number of records.
+func generateCloudTrailTestLogs(size int) string {
+	records := make([]CloudTrailTestRecord, size)
+	for i := 0; i < size; i++ {
+		records[i] = CloudTrailTestRecord{
+			EventVersion: "1.0",
+			EventName:    "ExampleEventName",
+			EventTime:    time.Now().UTC().Format(time.RFC3339),
+			AWSRegion:    "us-east-1",
+		}
+	}
+
+	cloudTrailLogs := CloudTrailRecords{
+		Records: records,
+	}
+
+	jsonData, _ := json.Marshal(cloudTrailLogs)
+	return string(jsonData)
+}
+
 // TestGetLogsFromS3Event is a unit test function that tests the GetLogsFromS3Event function.
 // It tests different scenarios of S3 event processing and verifies the expected results.
 func TestGetLogsFromS3Event(t *testing.T) {
@@ -75,6 +110,7 @@ func TestGetLogsFromS3Event(t *testing.T) {
 		setupRFMock   func(*MockReaderFactory) // Function to set up the ReaderFactory mock
 		expectedError error                    // Expected error from the function
 		batchSize     int                      // Expected number of batches
+		URLDecodedKey string                   // URLDecodedKey of the S3 object
 	}{
 		{
 			name: "Successful S3 event processing",
@@ -88,6 +124,7 @@ func TestGetLogsFromS3Event(t *testing.T) {
 			},
 			expectedError: nil,
 			batchSize:     1,
+			URLDecodedKey: "test-key.gz",
 		},
 		{
 			name: "Error fetching S3 object",
@@ -96,6 +133,7 @@ func TestGetLogsFromS3Event(t *testing.T) {
 			},
 			setupRFMock:   func(m *MockReaderFactory) {},
 			expectedError: errors.New("s3 error"),
+			URLDecodedKey: "test-key.gz",
 		},
 		{
 			name: "Successful S3 event processing. Used to test the maximum number of messages in a batch.",
@@ -109,6 +147,7 @@ func TestGetLogsFromS3Event(t *testing.T) {
 			},
 			expectedError: nil,
 			batchSize:     2,
+			URLDecodedKey: "test-key.gz",
 		},
 		{
 			name: "Successful S3 event processing. Used to test the maximum payload size in a batch.",
@@ -122,6 +161,29 @@ func TestGetLogsFromS3Event(t *testing.T) {
 			},
 			expectedError: nil,
 			batchSize:     2,
+			URLDecodedKey: "test-key.gz",
+		},
+		{
+			name:          "CloudTrail Digest Ignore Scenario.",
+			setupS3Mock:   func(m *MockAPI) {},
+			setupRFMock:   func(m *MockReaderFactory) {},
+			expectedError: nil,
+			batchSize:     0,
+			URLDecodedKey: "test-key_CloudTrail-Digest_2021-09-01T00-00-00Z.json.gz",
+		},
+		{
+			name: "Reading CloudTrail logs from S3 event",
+			setupS3Mock: func(m *MockAPI) {
+				m.On("GetObject", mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{
+					Body: io.NopCloser(bytes.NewReader([]byte(generateCloudTrailTestLogs(4)))),
+				}, nil)
+			},
+			setupRFMock: func(m *MockReaderFactory) {
+				m.On("Create", mock.Anything, "test-key_CloudTrail_2021-09-01T00-00-00Z.json.gz").Return(strings.NewReader(generateCloudTrailTestLogs(4)), nil)
+			},
+			expectedError: nil,
+			batchSize:     1,
+			URLDecodedKey: "test-key_CloudTrail_2021-09-01T00-00-00Z.json.gz",
 		},
 	}
 
@@ -143,7 +205,7 @@ func TestGetLogsFromS3Event(t *testing.T) {
 								Name: "test-bucket",
 							},
 							Object: events.S3Object{
-								URLDecodedKey: "test-key.gz",
+								URLDecodedKey: tc.URLDecodedKey,
 							},
 						},
 					},

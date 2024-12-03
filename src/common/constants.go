@@ -40,3 +40,9 @@ const MaxPayloadSize = 1 * 1024 * 1024 // 1 mb
 
 // MaxPayloadMessages is the maximum number of messages in a payload.
 const MaxPayloadMessages = 900
+
+// CloudTrailDigestRegex is the regex pattern for CloudTrail digest files.
+const CloudTrailDigestRegex = ".*_CloudTrail-Digest_.*\\.json\\.gz$"
+
+// CloudTrailRegex is the regex pattern for CloudTrail files.
+const CloudTrailRegex = ".*_CloudTrail_.*\\.json\\.gz$"
