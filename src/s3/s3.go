@@ -41,7 +41,7 @@ func GetLogsFromS3Event(ctx context.Context, s3Event events.S3Event, awsConfigur
 		attributes := common.LogAttributes{
 			"aws.accountId":            awsConfiguration.AccountID,
 			"logBucketName":            record.S3.Bucket.Name,
-			"logObjectURI":             record.S3.Object.URLDecodedKey,
+			"logObjectKey":             record.S3.Object.URLDecodedKey,
 			"aws.realm":                awsConfiguration.Realm,
 			"aws.region":               awsConfiguration.Region,
 			"instrumentation.provider": common.InstrumentationProvider,
