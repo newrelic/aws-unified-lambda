@@ -73,7 +73,14 @@ jobs:
     #          - me-central-1
     #          - il-central-1
     #          - sa-east-1
+
     steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: log-forwarder-zip
+          path: ./build-artifacts
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -86,7 +93,7 @@ jobs:
           region: ${{ matrix.region }}
         run: |
           bucket_name="unified-logging-lambda-code-test-${region}"
-          aws s3 cp "$log_forwarder_zip_file_name" "s3://$bucket_name/$bucket_prefix/" --region "$region"
+          aws s3 cp "./build-artifacts/$log_forwarder_zip_file_name" "s3://$bucket_name/$bucket_prefix/" --region "$region"
           echo "Deploying $log_forwarder_zip_file_name to region $REGION"
 
   deploy-temaplate-files:
