@@ -1,112 +1,19 @@
-name: Pull Request Workflow
+name: Build and Deploy Lambda
 
 on:
-  pull_request:
+  push:
     branches:
       - main
 
+env:
+  log_forwarder_zip_file_name: new-relic-log-forwarder.zip
+
 jobs:
-  validate-template-code:
+  build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Install golint
-        run: |
-          go install golang.org/x/lint/golint@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      - name: Lint Go Code
-        run: |
-            # Find all .go files, excluding the vendor directory
-            go_files=$(find . -name "*.go" -not -path "./vendor/*" -not -path "./src/vendor/*")
-            
-            # Run golint on each Go file
-            lint_output=""
-            for file in $go_files; do
-              output=$(golint $file)
-              if [ -n "$output" ]; then
-                lint_output="$lint_output\n$output"
-              fi
-            done
-  
-            if [ -n "$lint_output" ]; then
-              echo "Linting issues found:"
-              echo -e "$lint_output"
-              exit 1
-            else
-              echo "No linting issues found."
-            fi
-      - name: Run gofmt
-        run: |
-          # Find all .go files and check if they are properly formatted
-          unformatted=$(gofmt -l $(find . -name "*.go" -not -path "./src/vendor/*"))
-          if [ -n "$unformatted" ]; then
-            echo "The following files are not formatted:"
-            echo "$unformatted"
-            exit 1
-          else
-            echo "All files are properly formatted."
-          fi
-      
-      - name: Validate SAM Templates
-        run: |
-          for template in $(find . -name ".yaml" -o -name ".yml"); do
-          echo "Validating template: $template"
-          sam validate --template-file "$template" --region us-east-2 --lint
-          done
-  security:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Run CFN Nag Security Checks
-        uses: stelligent/cfn_nag@master
-        with:
-          input_path: .
-          extra_args: -o sarif
-          output_path: cfn_nag.sarif
-      - name: Upload CFN Nag SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: cfn_nag.sarif    
-          category: security
-                                 
-  trivy-scan:
-    name: Trivy security scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner in repo mode for Low Priority
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          ignore-unfixed: true
-          severity: 'LOW,MEDIUM'
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
-      - name: Run Trivy vulnerability scanner in repo mode for High Priority
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          ignore-unfixed: true
-          exit-code: 1
-          severity: 'HIGH,CRITICAL'
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
-
-  test-and-coverage:
-    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -115,16 +22,104 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-      #scripts to include the integration and end to end tests should be added here
-      - name: Run Test Cases and Coverage
+
+      - name: Build and Package Go executable
         run: |
           cd src
-          mkdir -p coverage
-          go test -race -coverprofile=coverage/coverage.out ./...
-          go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+          go mod tidy
+          GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
+          zip -r ../$log_forwarder_zip_file_name .
+          cd ..
 
-      - name: Upload Coverage Report
+      - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: coverage-report
-          path: src/coverage/coverage.html
+          name: log-forwarder-zip
+          path: log_forwarder_zip_file_name
+
+  deploy-lambda-code:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region:
+          - us-east-1
+          - us-east-2
+    #          - eu-west-1
+    #          - eu-west-2
+    #          - us-west-1
+    #          - us-west-2
+    #          - af-south-1
+    #          - ap-east-1
+    #          - ap-south-2
+    #          - ap-southeast-3
+    #          - ap-southeast-5
+    #          - ap-southeast-4
+    #          - ap-south-1
+    #          - ap-northeast-3
+    #          - ap-northeast-2
+    #          - ap-southeast-1
+    #          - ap-southeast-2
+    #          - ap-northeast-1
+    #          - ca-central-1
+    #          - ca-west-1
+    #          - eu-central-1
+    #          - eu-south-1
+    #          - eu-west-3
+    #          - eu-south-2
+    #          - eu-north-1
+    #          - eu-central-2
+    #          - me-south-1
+    #          - me-central-1
+    #          - il-central-1
+    #          - sa-east-1
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_SAR_PUBLISHER_ROLE }}
+          aws-region: us-east-1
+
+      - name: Upload lambda code to S3 buckets in all AWS region
+        env:
+          bucket_prefix: new-relic-log-forwarder-folder
+          region: ${{ matrix.region }}
+        run: |
+          bucket_name="unified-logging-lambda-code-test-${region}"
+          aws s3 cp "$log_forwarder_zip_file_name" "s3://$bucket_name/$bucket_prefix/" --region "$region"
+          echo "Deploying $log_forwarder_zip_file_name to region $REGION"
+
+  deploy-temaplate-files:
+    needs: deploy-lambda-code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Build and Package SAM Application and Upload to S3
+        env:
+          bucket_name: anusha-test-ansuha
+          region: us-east-1
+        run: |
+          BUILD_DIR_BASE=".aws-sam/build"
+          TEMPLATES=(
+            "logging-lambda-metric-polling.yaml"
+            "logging-lambda-metric-stream.yaml"
+            "logging-firehose-metric-polling.yaml"
+            "logging-firehose-metric-stream.yaml"
+            "logging-lambda-firehose-metric-polling.yaml"
+            "logging-lambda-firehose-metric-stream.yaml"
+            "lambda-template.yaml"
+            "logging-lambda-firehose-template.yaml"
+          )
+          
+          for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
+            BASE_NAME=$(basename "$TEMPLATE_FILE" .yaml)
+            BUILD_DIR="$BUILD_DIR_BASE/$BASE_NAME"
+          
+            sam build --template-file "$TEMPLATE_FILE" --build-dir "$BUILD_DIR"
+            sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE" --region $region
+          
+            aws s3 cp "$BUILD_DIR/$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
+          done
