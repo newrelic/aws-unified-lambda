@@ -122,6 +122,6 @@ jobs:
           
           for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
             sam build --template-file "$TEMPLATE_FILE"
-            sam package --s3-bucket "$bucket_name" --template-file "template.yaml" --output-template-file "$TEMPLATE_FILE" --region $region
+            sam package --s3-bucket "$bucket_name" --template-file ".aws-sam/build/template.yaml" --output-template-file "$TEMPLATE_FILE" --region $region
             aws s3 cp "$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
           done
