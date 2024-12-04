@@ -25,14 +25,14 @@ jobs:
           cd src
           go mod tidy
           GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
-          zip -r ../$log_forwarder_zip_file_name .
+          zip -r ../build/$log_forwarder_zip_file_name .
           cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: log-forwarder-zip
-          path: log_forwarder_zip_file_name
+          path: build
 
   deploy-lambda-code:
     needs: build
