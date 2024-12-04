@@ -48,41 +48,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_S3_PUBLISH_ROLE }}
           aws-region: us-east-2
 
-      - name: Build and Package SAM Application and Upload to S3
-        env:
-          bucket_name: unified-lambda-serverless
-          region: us-east-2
-        run: |
-          BUILD_DIR_BASE=".aws-sam/build"
-          TEMPLATES=(
-            "logging-lambda-metric-polling.yaml"
-            "logging-lambda-metric-stream.yaml"
-            "logging-firehose-metric-polling.yaml"
-            "logging-firehose-metric-stream.yaml"
-            "logging-lambda-firehose-metric-polling.yaml"
-            "logging-lambda-firehose-metric-stream.yaml"
-            "lambda-template.yaml"
-            "logging-lambda-firehose-template.yaml"
-          )
-          
-          for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
-            BASE_NAME=$(basename "$TEMPLATE_FILE" .yaml)
-            BUILD_DIR=".aws-sam/build/$BASE_NAME"
-
-            sam build --template-file "$TEMPLATE_FILE" --build-dir "$BUILD_DIR"
-            sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE"  --region $region
-            if [[ $? -ne 0 ]]; then
-              echo "Error: Failed to package template $TEMPLATE_FILE"
-            fi  
-          
-            aws s3 cp "$BUILD_DIR/$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
-            if [[ $? -ne 0 ]]; then
-              echo "Error: Failed to copy $TEMPLATE_FILE to S3 bucket $bucket_name"
-            fi
-          
-          done
-  
-
   deploy-lambda-code-parallelly-to-all-region:
     needs: build-and-deploy
     permissions:
