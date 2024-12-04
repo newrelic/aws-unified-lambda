@@ -144,21 +144,25 @@ Resources:
                                       cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)} - logGroupName: {logGroupName}')
                   
                   elif request_type == 'Delete':
-                      for log_group in log_group_config:
-                          log_group_name = log_group['LogGroupName']
-                          if log_group_name in invalid_log_groups:
-                              logger.info(f'Log group {log_group_name} is invalid. Skipping...')
-                              continue
+                      try:
+                          for log_group in log_group_config:
+                              log_group_name = log_group['LogGroupName']
+                              if log_group_name in invalid_log_groups:
+                                  logger.info(f'Log group {log_group_name} is invalid. Skipping...')
+                                  continue
                           
-                          # Unique filter name for this stack using Lambda ARN
-                          filter_name = f'LambdaSubscription_{hashlib.sha256(lambda_arn.encode()).hexdigest()[:20]}'
+                              # Unique filter name for this stack using Lambda ARN
+                              filter_name = f'LambdaSubscription_{hashlib.sha256(lambda_arn.encode()).hexdigest()[:20]}'
 
                           
-                          #remove the subscription filter
-                          log_client.delete_subscription_filter(
-                              logGroupName=log_group_name,
-                              filterName=filter_name
-                          )
+                              #remove the subscription filter
+                              log_client.delete_subscription_filter(
+                                  logGroupName=log_group_name,
+                                  filterName=filter_name
+                              )
+                      except Exception as e:
+                          logger.error(f'Delete failed for the log group subscription filters with error: {str(e)}')
+                          cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
                   cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
               except Exception as e:
                   logger.error(f'Error: {str(e)}')
