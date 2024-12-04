@@ -77,8 +77,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_SAR_PUBLISHER_ROLE }}
-          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_S3_PUBLISH_ROLE_TEMP }}
+          aws-region: us-east-2
 
       - name: Upload lambda code to S3 buckets in all AWS region
         env:
@@ -102,7 +102,6 @@ jobs:
           bucket_name: anusha-test-ansuha
           region: us-east-1
         run: |
-          BUILD_DIR_BASE=".aws-sam/build"
           TEMPLATES=(
             "logging-lambda-metric-polling.yaml"
             "logging-lambda-metric-stream.yaml"
@@ -115,11 +114,7 @@ jobs:
           )
           
           for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
-            BASE_NAME=$(basename "$TEMPLATE_FILE" .yaml)
-            BUILD_DIR="$BUILD_DIR_BASE/$BASE_NAME"
-          
-            sam build --template-file "$TEMPLATE_FILE" --build-dir "$BUILD_DIR"
-            sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE" --region $region
-          
-            aws s3 cp "$BUILD_DIR/$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
+            sam build --template-file "$TEMPLATE_FILE"
+            sam package --s3-bucket "$bucket_name" --template-file "template.yaml" --output-template-file "$TEMPLATE_FILE" --region $region
+            aws s3 cp "$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
           done
