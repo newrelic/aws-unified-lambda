@@ -73,9 +73,11 @@ jobs:
             sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE"  --region $region
           
             aws s3 cp "$BUILD_DIR/$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
-          done  
+          done
+            
 
   deploy-lambda-code-parallelly-to-all-region:
+    needs: build-and-deploy
     permissions:
       id-token: write
       contents: write
