@@ -1,7 +1,7 @@
 name: Build and Deploy Lambda
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -20,10 +20,20 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Prepare Template for S3 Deployment
+        run: |
+          TEMPLATE_FILE='lambda-template.yaml'
+          S3_BUCKET_KEY='new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'
+          
+          # Replace CodeUri from local path to S3 structure
+          sed -i "s|CodeUri: /src|CodeUri:\n    Bucket: !FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]\n    Key: '${S3_BUCKET_KEY}'|" "$TEMPLATE_FILE"
+          
+          echo "Template file updated successfully with S3 bucket as CodeUri."
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_SAR_PUBLISHER_ROLE }}
+          role-to-assume: ${{ secrets.AWS_S3_PUBLISH_ROLE_TEMP }}
           aws-region: us-east-2
 
       - name: Install AWS SAM CLI
