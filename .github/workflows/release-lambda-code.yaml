@@ -1,15 +1,14 @@
-name: Build and Deploy Lambda
+name: Build and Deploy Lambda Code
 
 on:
   push:
     branches:
       - main
-
-env:
-  log_forwarder_zip_file_name: new-relic-log-forwarder.zip
+    paths:
+      - 'src/**'
 
 jobs:
-  build-and-deploy:
+  build-lambda-code:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -38,52 +37,8 @@ jobs:
           path: |
             ${{ env.log_forwarder_zip_file_name }}
 
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_S3_PUBLISH_ROLE }}
-          aws-region: us-east-2
-
-      - name: Build and Package SAM Application and Upload to S3
-        env:
-          bucket_name: unified-lambda-serverless
-          region: us-east-2
-        run: |
-          BUILD_DIR_BASE=".aws-sam/build"
-          TEMPLATES=(
-            "logging-lambda-metric-polling.yaml"
-            "logging-lambda-metric-stream.yaml"
-            "logging-firehose-metric-polling.yaml"
-            "logging-firehose-metric-stream.yaml"
-            "logging-lambda-firehose-metric-polling.yaml"
-            "logging-lambda-firehose-metric-stream.yaml"
-            "lambda-template.yaml"
-            "logging-lambda-firehose-template.yaml"
-          )
-          
-          for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
-            BASE_NAME=$(basename "$TEMPLATE_FILE" .yaml)
-            BUILD_DIR=".aws-sam/build/$BASE_NAME"
-          
-            sam build --template-file "$TEMPLATE_FILE" --build-dir "$BUILD_DIR"
-            sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE"  --region $region
-            if [[ $? -ne 0 ]]; then
-              echo "Error: Failed to package template $TEMPLATE_FILE"
-            fi  
-          
-            aws s3 cp "$BUILD_DIR/$TEMPLATE_FILE" "s3://$bucket_name/$TEMPLATE_FILE"
-            if [[ $? -ne 0 ]]; then
-              echo "Error: Failed to copy $TEMPLATE_FILE to S3 bucket $bucket_name"
-            fi
-          
-          done
-
   deploy-lambda-code-parallelly-to-all-region:
-    needs: build-and-deploy
+    needs: build-lambda-code
     permissions:
       id-token: write
       contents: write
@@ -135,12 +90,34 @@ jobs:
           role-to-assume: ${{ secrets.AWS_S3_PUBLISH_ROLE }}
           aws-region: us-east-2
 
-      # should we include retries as part of uploading?
       - name: Upload lambda code to S3 buckets in all AWS region
         env:
           bucket_prefix: new-relic-log-forwarder-folder
           region: ${{ matrix.region }}
         run: |
           bucket_name="unified-logging-lambda-code-$region"
-          aws s3 cp "./build-artifacts/$log_forwarder_zip_file_name" "s3://$bucket_name/$bucket_prefix/" --region "$region"
-          echo "Deploying $log_forwarder_zip_file_name to region $REGION"
+          
+          max_retries=3
+          retry_delay=5
+          attempt=0
+          success=false
+          
+          while [[ $attempt -lt $max_retries ]]; do
+            echo "Attempt $(($attempt + 1)) to upload $log_forwarder_zip_file_name to S3 bucket $bucket_name"
+            aws s3 cp "./build-artifacts/$log_forwarder_zip_file_name" "s3://$bucket_name/$bucket_prefix/" --region "$region"
+            
+            if [[ $? -eq 0 ]]; then
+              success=true
+              echo "Deployment of $log_forwarder_zip_file_name completed to region $region"
+              break
+            else
+              echo "Error: Failed to copy $log_forwarder_zip_file_name to S3 bucket $bucket_name. Retrying in $retry_delay seconds..."
+              sleep $retry_delay
+            fi
+            
+            attempt=$(($attempt + 1))
+          done
+            
+          if ! $success; then
+            echo "Error: Failed to copy $log_forwarder_zip_file_name to S3 bucket $bucket_name after $max_retries attempts."
+          fi
