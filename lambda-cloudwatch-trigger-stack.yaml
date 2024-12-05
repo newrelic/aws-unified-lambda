@@ -118,7 +118,7 @@ Resources:
                           add_permission_if_needed(event,context,lambda_arn, log_group_arn, log_group_name)
 
                           # Unique filter name for this stack using Lambda ARN
-                          filter_name = f'LambdaSubscription_{hashlib.sha256(lambda_arn.encode()).hexdigest()[:20]}'
+                          filter_name = f'NewRelicLogsLambdaSubscription_{hashlib.sha256(lambda_arn.encode()).hexdigest()[:20]}'
 
                           # Retry logic for PutSubscriptionFilter                       
                           max_retries = 5
@@ -152,7 +152,7 @@ Resources:
                                   continue
                           
                               # Unique filter name for this stack using Lambda ARN
-                              filter_name = f'LambdaSubscription_{hashlib.sha256(lambda_arn.encode()).hexdigest()[:20]}'
+                              filter_name = f'NewRelicLogsLambdaSubscription_{hashlib.sha256(lambda_arn.encode()).hexdigest()[:20]}'
 
                           
                               #remove the subscription filter
