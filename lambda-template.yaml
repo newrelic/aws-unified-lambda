@@ -477,8 +477,7 @@ Resources:
                       if invalid_log_groups:
                             response['UserInputCloudwatchErrorMessages'] = (
                               'Validation Failed for Input Provided. These Log Groups: [{}] do not exist in your account.'
-                              'Please setup Cloudwatch to Data Firehose subscription manually for additional log groups including these failed ones to stream with the resource Logical ID: "LoggingFirehoseStreamToNewRelic".'
-                              'While setting up the subscription manuually you can use the IAM role with resource Logical ID: "CloudWatchFirehoseRole" created by this deployment.'.format(','.join(invalid_log_groups))
+                              'Please setup Cloudwatch to Lambda Event Trigger subscription manually for additional log groups including these failed ones to send logs to new relic.'.format(','.join(invalid_log_groups))
                             )
 
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
