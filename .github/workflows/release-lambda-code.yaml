@@ -1,0 +1,123 @@
+name: Build and Deploy Lambda Code
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+
+jobs:
+  build-lambda-code:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build and Package Go executable
+        run: |
+          cd src
+          go mod tidy
+          GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
+          zip -r ../$log_forwarder_zip_file_name .
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: log-forwarder-zip
+          path: |
+            ${{ env.log_forwarder_zip_file_name }}
+
+  deploy-lambda-code-parallelly-to-all-region:
+    needs: build-lambda-code
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region:
+          - us-east-1
+          - us-east-2
+          - eu-west-1
+          - eu-west-2
+          - us-west-1
+          - us-west-2
+          - af-south-1
+          - ap-east-1
+          - ap-south-2
+          - ap-southeast-3
+          - ap-southeast-5
+          - ap-southeast-4
+          - ap-south-1
+          - ap-northeast-3
+          - ap-northeast-2
+          - ap-southeast-1
+          - ap-southeast-2
+          - ap-northeast-1
+          - ca-central-1
+          - ca-west-1
+          - eu-central-1
+          - eu-south-1
+          - eu-west-3
+          - eu-south-2
+          - eu-north-1
+          - eu-central-2
+          - me-south-1
+          - me-central-1
+          - il-central-1
+          - sa-east-1
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: log-forwarder-zip
+          path: ./build-artifacts
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_S3_PUBLISH_ROLE }}
+          aws-region: us-east-2
+
+      - name: Upload lambda code to S3 buckets in all AWS region
+        env:
+          bucket_prefix: new-relic-log-forwarder-folder
+          region: ${{ matrix.region }}
+        run: |
+          bucket_name="unified-logging-lambda-code-$region"
+          
+          max_retries=3
+          retry_delay=5
+          attempt=0
+          success=false
+          
+          while [[ $attempt -lt $max_retries ]]; do
+            echo "Attempt $(($attempt + 1)) to upload $log_forwarder_zip_file_name to S3 bucket $bucket_name"
+            aws s3 cp "./build-artifacts/$log_forwarder_zip_file_name" "s3://$bucket_name/$bucket_prefix/" --region "$region"
+            
+            if [[ $? -eq 0 ]]; then
+              success=true
+              echo "Deployment of $log_forwarder_zip_file_name completed to region $region"
+              break
+            else
+              echo "Error: Failed to copy $log_forwarder_zip_file_name to S3 bucket $bucket_name. Retrying in $retry_delay seconds..."
+              sleep $retry_delay
+            fi
+            
+            attempt=$(($attempt + 1))
+          done
+            
+          if ! $success; then
+            echo "Error: Failed to copy $log_forwarder_zip_file_name to S3 bucket $bucket_name after $max_retries attempts."
+          fi
