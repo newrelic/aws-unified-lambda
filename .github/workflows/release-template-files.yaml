@@ -7,9 +7,6 @@ on:
     paths:
       - '*.yaml'
 
-env:
-  log_forwarder_zip_file_name: new-relic-log-forwarder.zip
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -55,7 +52,7 @@ jobs:
             BUILD_DIR=".aws-sam/build/$BASE_NAME"
           
             sam build --template-file "$TEMPLATE_FILE" --build-dir "$BUILD_DIR"
-            sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE"  --region $region
+            sam package --s3-bucket "$bucket_name" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE"
             if [[ $? -ne 0 ]]; then
               echo "Error: Failed to package template $TEMPLATE_FILE"
             fi
@@ -82,7 +79,7 @@ jobs:
             done
             
             if ! $success; then
-              echo "Error: Failed to copy $log_forwarder_zip_file_name to S3 bucket $bucket_name after $max_retries attempts."
+              echo "Error: Failed to copy $TEMPLATE_FILE to S3 bucket $bucket_name after $max_retries attempts."
             fi
           
           done
