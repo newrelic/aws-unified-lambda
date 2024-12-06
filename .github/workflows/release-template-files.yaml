@@ -1,9 +1,11 @@
 name: Build and Deploy Template files
 
 on:
-  pull_request:
+  push:
     branches:
       - main
+    paths:
+      - '*.yaml'
 
 env:
   log_forwarder_zip_file_name: new-relic-log-forwarder.zip
