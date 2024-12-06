@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - '*.yaml'
+
 env:
   log_forwarder_zip_file_name: new-relic-log-forwarder.zip
 
