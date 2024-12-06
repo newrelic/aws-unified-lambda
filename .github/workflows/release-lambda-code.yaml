@@ -7,6 +7,9 @@ on:
     paths:
       - 'src/**'
 
+env:
+  log_forwarder_zip_file_name: new-relic-log-forwarder.zip
+
 jobs:
   build-lambda-code:
     runs-on: ubuntu-latest

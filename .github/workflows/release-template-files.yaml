@@ -7,9 +7,6 @@ on:
     paths:
       - '*.yaml'
 
-env:
-  log_forwarder_zip_file_name: new-relic-log-forwarder.zip
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -82,7 +79,7 @@ jobs:
             done
             
             if ! $success; then
-              echo "Error: Failed to copy $log_forwarder_zip_file_name to S3 bucket $bucket_name after $max_retries attempts."
+              echo "Error: Failed to copy $TEMPLATE_FILE to S3 bucket $bucket_name after $max_retries attempts."
             fi
           
           done
