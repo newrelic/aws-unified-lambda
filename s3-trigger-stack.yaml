@@ -78,15 +78,36 @@ Resources:
           def lambda_handler(event, context):
               response = {}
               try:
+                  event_data = event['ResourceProperties']          
+                  lambda_arn = event_data.get('LambdaFunctionArn', '')
+                  buckets = event_data.get('S3BucketArns', [])              
                   if event['RequestType'] == 'Delete':
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
-                      return {}
-                  
+                      try:
+                          for bucket_arn in buckets:
+                              parts = bucket_arn.split(":::")[-1].split("/", 1)
+                              bucket_name = parts[0]
+                           
+                              # get the existing notification configuration
+                              existing_config = s3.get_bucket_notification_configuration(Bucket=bucket_name)
+
+                              existing_lambda_configs = existing_config.get('LambdaFunctionConfigurations', [])
+                              if not existing_lambda_configs:
+                                  continue
+                              
+                              # Deleting the existing configuration
+                              updated_lambda_configs = [config for config in existing_lambda_configs if config['LambdaFunctionArn'] != lambda_arn]
+ 
+                              notification_config = {
+                                  'LambdaFunctionConfigurations': updated_lambda_configs
+                              }
+                              s3.put_bucket_notification_configuration(
+                                  Bucket=bucket_name,
+                                  NotificationConfiguration=notification_config
+                              )
+                      except Exception as e:
+                          logger.error(f'Delete failed for the bucket triggers  with error: {str(e)}')
+                          cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
                   else:
-                      event_data = event['ResourceProperties']
-          
-                      lambda_arn = event_data.get('LambdaFunctionArn', '')
-                      buckets = event_data.get('S3BucketArns', [])
                       bucket_where_trigger_exists = []
                       for bucket_arn in buckets:
 
@@ -155,7 +176,7 @@ Resources:
                           .format(','.join(bucket_where_trigger_exists))
                           )
 
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
               except Exception as e:
                   logger.error(f'Error: {str(e)}')
                   cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)} ')
