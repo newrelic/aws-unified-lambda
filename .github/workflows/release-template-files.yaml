@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '*.yaml'
 
 env:
   log_forwarder_zip_file_name: new-relic-log-forwarder.zip
@@ -17,6 +15,14 @@ jobs:
       id-token: write
       contents: write
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
       - name: Install AWS SAM CLI
         run: |
           pip install aws-sam-cli
@@ -31,7 +37,6 @@ jobs:
         env:
           bucket_name: unified-lambda-serverless
         run: |
-          BUILD_DIR_BASE=".aws-sam/build"
           TEMPLATES=(
             "logging-lambda-metric-polling.yaml"
             "logging-lambda-metric-stream.yaml"
