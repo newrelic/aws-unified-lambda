@@ -21,6 +21,7 @@ var log = logger.NewLogrusLogger(logger.WithDebugLevel())
 // It processes the incoming event and sends the logs to New Relic for logging.
 // It supports CloudWatch and S3 events.
 // It tracks the consumer go routines using a WaitGroup.
+// added a comment to test
 func handlerWithArgs(ctx context.Context, event unmarshal.Event, nrClient util.NewRelicClientAPI) error {
 	channel := make(chan common.DetailedLogsBatch)
 	var wg sync.WaitGroup
