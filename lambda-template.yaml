@@ -209,9 +209,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      CodeUri:
-        Bucket: !FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]
-        Key: 'new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'
+      CodeUri: src/
       Handler: bootstrap
       Runtime: provided.al2023
       Timeout: 900
