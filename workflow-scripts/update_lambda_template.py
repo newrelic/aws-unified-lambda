@@ -20,8 +20,8 @@ with open(file_path, 'r') as stream:
 
 code_uri_path = data.get('Resources', {}).get('NewRelicLogsServerlessLogForwarder', {}).get('Properties', {})
 code_uri_path['CodeUri'] = {
-    'Bucket': "!FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]",
-    'Key': 'new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'
+    'Bucket': '!FindInMap [ RegionToS3Bucket, !Ref \'AWS::Region\', BucketArn ]',
+    'Key': "new-relic-log-forwarder-folder/new-relic-log-forwarder.zip"
 }
 
 with open(file_path, 'w') as file:
