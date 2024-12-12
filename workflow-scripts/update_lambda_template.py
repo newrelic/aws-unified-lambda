@@ -1,18 +1,24 @@
-import yaml
+import re
 
 file_path = 'lambda-template.yaml'
 
-# Modify lambda-template with production s3 bucket arn
-with open(file_path, 'r') as stream:
-    data = yaml.safe_load(stream)
+with open(file_path, 'r') as file:
+    content = file.read()
 
-data['Resources']['NewRelicLogsServerlessLogForwarder']['Properties']['CodeUri'] = {
-    'Bucket': '!FindInMap [ RegionToS3Bucket, !Ref \'AWS::Region\', BucketArn ]',
-    'Key': 'new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'
-}
+# CodeUri: src/ pattern is identified and replaced with production s3 bucket arn
+pattern = re.compile(
+    r'CodeUri:\s*src/\s*'
+)
 
-# dump changes to lambda-template.yaml
-with open(file_path, 'w') as outfile:
-    yaml.dump(data, outfile, default_flow_style=False)
+replacement = (
+    "CodeUri:\n"
+    "    Bucket: !FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]\n"
+    "    Key: 'new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'\n"
+)
+
+new_content = pattern.sub(replacement, content)
+
+with open(file_path, 'w') as file:
+    file.write(new_content)
 
 print("Template file updated successfully.")
