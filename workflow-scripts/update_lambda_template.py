@@ -1,30 +1,26 @@
-import yaml
+from ruamel.yaml import YAML
 
-def unknown_constructor(loader, tag_suffix, node):
-    if isinstance(node, yaml.ScalarNode):
-        return loader.construct_scalar(node)
-    elif isinstance(node, yaml.SequenceNode):
-        return loader.construct_sequence(node)
-    elif isinstance(node, yaml.MappingNode):
-        return loader.construct_mapping(node)
-    return None
+yaml = YAML()
 
 file_path = 'lambda-template.yaml'
 
-with open(file_path, 'r') as stream:
-    try:
-        yaml.add_multi_constructor('!', unknown_constructor, Loader=yaml.FullLoader)
-        data = yaml.load(stream, Loader=yaml.FullLoader)
-    except yaml.YAMLError as exc:
-        print(exc)
+# Load the existing YAML content
+with open(file_path, 'r') as file:
+    data = yaml.load(file)
 
-code_uri_path = data.get('Resources', {}).get('NewRelicLogsServerlessLogForwarder', {}).get('Properties', {})
-code_uri_path['CodeUri'] = {
-    'Bucket': '!FindInMap [ RegionToS3Bucket, !Ref \'AWS::Region\', BucketArn ]',
+# Navigate to the desired structure and perform the update
+resources = data.get('Resources', {})
+nr_log_forwarder = resources.get('NewRelicLogsServerlessLogForwarder', {})
+properties = nr_log_forwarder.get('Properties', {})
+
+# Update the CodeUri with the exact desired structure
+properties['CodeUri'] = {
+    'Bucket': yaml.load("!FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]"),
     'Key': "new-relic-log-forwarder-folder/new-relic-log-forwarder.zip"
 }
 
+# Write the updated data back to the YAML file
 with open(file_path, 'w') as file:
-    yaml.dump(data, file, default_flow_style=False)
+    yaml.dump(data, file)
 
 print("Template file updated successfully.")
