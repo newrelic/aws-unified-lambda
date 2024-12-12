@@ -26,14 +26,22 @@ jobs:
         run: |
           pip install aws-sam-cli
 
-      - name: Prepare Template for S3 Deployment
+      # modify lambda CodeUri to production as s3 bucket destination
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML
         run: |
-          TEMPLATE_FILE='lambda-template.yaml'
-          S3_BUCKET_KEY='new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'
-          
-          sed -i "s|CodeUri: /src|CodeUri:\n    Bucket: !FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]\n    Key: '${S3_BUCKET_KEY}'|" "$TEMPLATE_FILE"
-          
-          echo "Template file updated successfully with S3 bucket as CodeUri."
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Run Python Script to Update lambda-template.yaml
+        run: python scripts/update_yaml.py
+
+      - name: Verify the changes
+        run: cat lambda-template.yaml
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
