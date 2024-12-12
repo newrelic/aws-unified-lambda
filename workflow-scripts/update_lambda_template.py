@@ -13,7 +13,7 @@ pattern = re.compile(
 replacement = (
     "CodeUri:\n"
     "        Bucket: !FindInMap [ RegionToS3Bucket, !Ref 'AWS::Region', BucketArn ]\n"
-    "        Key: 'new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'"
+    "        Key: 'new-relic-log-forwarder-folder/new-relic-log-forwarder.zip'\n"
 )
 
 new_content = pattern.sub(replacement, content)
