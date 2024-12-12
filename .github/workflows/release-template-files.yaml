@@ -38,7 +38,7 @@ jobs:
           pip install pyyaml
 
       - name: Run Python Script to Update lambda-template.yaml
-        run: python scripts/update_yaml.py
+        run: python workflow-scripts/update_lambda_template.py
 
       - name: Verify the changes
         run: cat lambda-template.yaml
