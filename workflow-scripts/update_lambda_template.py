@@ -1,8 +1,12 @@
 from ruamel.yaml import YAML
+import os
 
 yaml = YAML()
 
 file_path = 'lambda-template.yaml'
+
+if not os.path.exists(file_path):
+    raise FileNotFoundError(f"The file '{file_path}' does not exist.")
 
 # Load the existing YAML content
 with open(file_path, 'r') as file:
