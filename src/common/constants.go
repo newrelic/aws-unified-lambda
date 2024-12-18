@@ -46,3 +46,9 @@ const CloudTrailDigestRegex = ".*_CloudTrail-Digest_.*\\.json\\.gz$"
 
 // CloudTrailRegex is the regex pattern for CloudTrail files.
 const CloudTrailRegex = ".*_CloudTrail_.*\\.json\\.gz$"
+
+// RequestIdRegex is the regex pattern for RequestId.
+const RequestIdRegex = "RequestId:\\s([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"
+
+// Prefix for identifing log group belonging to lambda
+const LambdaLogGroup = "/aws/lambda"
