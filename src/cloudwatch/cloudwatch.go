@@ -55,7 +55,7 @@ func batchLogEntries(cloudwatchLogsData events.CloudwatchLogsData, channel chan 
 	var currentBatch common.LogData
 
 	// Regular expression to match the pattern "RequestId: <UUID> <message>"
-	regularExpression := regexp.MustCompile(common.RequestIdRegex)
+	regularExpression := regexp.MustCompile(common.RequestIDRegex)
 
 	for _, record := range cloudwatchLogsData.LogEvents {
 		messages := util.SplitLargeMessages(record.Message)
