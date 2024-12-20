@@ -2,10 +2,12 @@ package util
 
 import (
 	"encoding/json"
+	"reflect"
+	"regexp"
+	"testing"
+
 	"github.com/newrelic/aws-unified-lambda-logging/common"
 	"github.com/stretchr/testify/assert"
-	"reflect"
-	"testing"
 )
 
 // TestAddCustomMetaData tests adding custom meta data utility function.
@@ -206,6 +208,71 @@ func TestParseCTEvents(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ParseCloudTrailEvents got = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+// TestAddRequestId tests the AddRequestId function.
+func TestAddRequestId(t *testing.T) {
+	tests := []struct {
+		name           string
+		logGroup       string
+		message        string
+		attributes     common.LogAttributes
+		lastRequestId  string
+		expectedReqId  string
+		expectedAttrib common.LogAttributes
+	}{
+		{
+			name:          "Valid RequestId",
+			logGroup:      "/aws/lambda/test",
+			message:       "RequestId: d653fb2c-0234-46ff-ae6b-9a418b888420 hello world",
+			attributes:    common.LogAttributes{},
+			lastRequestId: "",
+			expectedReqId: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			expectedAttrib: common.LogAttributes{
+				"requestId": "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			},
+		},
+		{
+			name:          "No RequestId in message",
+			logGroup:      "/aws/lambda/test",
+			message:       "hello world",
+			attributes:    common.LogAttributes{},
+			lastRequestId: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			expectedReqId: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			expectedAttrib: common.LogAttributes{
+				"requestId": "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			},
+		},
+		{
+			name:           "No RequestId and no previous RequestId",
+			logGroup:       "/aws/lambda/test",
+			message:        "hello world",
+			attributes:     common.LogAttributes{},
+			lastRequestId:  "",
+			expectedReqId:  "",
+			expectedAttrib: common.LogAttributes{},
+		},
+		{
+			name:           "Non-matching log group",
+			logGroup:       "/aws/other/test",
+			message:        "RequestId: d653fb2c-0234-46ff-ae6b-9a418b888420 hello world",
+			attributes:     common.LogAttributes{},
+			lastRequestId:  "",
+			expectedReqId:  "",
+			expectedAttrib: common.LogAttributes{},
+		},
+	}
+
+	// Regular expression to match the pattern "RequestId: <UUID>"
+	re := regexp.MustCompile(`RequestId:\s([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})`)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotReqId := AddRequestId(tt.logGroup, tt.message, tt.attributes, tt.lastRequestId, re)
+			assert.Equal(t, tt.expectedReqId, gotReqId)
+			assert.Equal(t, tt.expectedAttrib, tt.attributes)
 		})
 	}
 }

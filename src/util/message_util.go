@@ -3,8 +3,11 @@ package util
 
 import (
 	"encoding/json"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"regexp"
+	"strings"
 	"time"
+
+	"github.com/newrelic/aws-unified-lambda-logging/common"
 )
 
 // SplitLargeMessages splits a large message into smaller messages if its length exceeds the maximum message size.
@@ -92,4 +95,21 @@ func ParseCloudTrailEvents(message string) ([]string, error) {
 		records = append(records, string(recordJSON))
 	}
 	return records, nil
+}
+
+// AddRequestId extracts the requestId from the message and updates the attributes map.
+// It returns the last requestId found to keep track of the requestId across log messages.
+func AddRequestId(logGroup, message string, attributes common.LogAttributes, lastRequestId string, regularExpression *regexp.Regexp) string {
+
+	if strings.HasPrefix(logGroup, common.LambdaLogGroup) {
+		matches := regularExpression.FindStringSubmatch(message)
+		if len(matches) == 2 {
+			lastRequestId = matches[1]
+			attributes["requestId"] = lastRequestId
+		} else if lastRequestId != "" {
+			attributes["requestId"] = lastRequestId
+		}
+	}
+
+	return lastRequestId
 }
