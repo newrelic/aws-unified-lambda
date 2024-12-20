@@ -61,14 +61,17 @@ func batchLogEntries(cloudwatchLogsData events.CloudwatchLogsData, channel chan 
 
 	for _, record := range cloudwatchLogsData.LogEvents {
 		messages := util.SplitLargeMessages(record.Message)
-
 		for _, message := range messages {
-			entry := common.Log{
-				Timestamp: strconv.FormatInt(record.Timestamp, 10),
-				Log:       message,
-			}
 
-			lastRequestID = util.AddRequestID(cloudwatchLogsData.LogGroup, message, attributes, lastRequestID, regularExpression)
+			// logAttribute is a map of attributes for each individual log message.
+			logAttribute := common.LogAttributes{}
+
+			entry := common.Log{
+				Timestamp:  strconv.FormatInt(record.Timestamp, 10),
+				Log:        message,
+				Attributes: logAttribute,
+			}
+			lastRequestID = util.AddRequestID(cloudwatchLogsData.LogGroup, message, logAttribute, lastRequestID, regularExpression)
 
 			if batchSize+len(message) > common.MaxPayloadSize || messageCount >= common.MaxPayloadMessages {
 				util.ProduceMessageToChannel(channel, currentBatch, attributes)
