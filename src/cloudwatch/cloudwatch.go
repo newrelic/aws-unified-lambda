@@ -3,6 +3,7 @@ package cloudwatch
 
 import (
 	"os"
+	"regexp"
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -52,14 +53,25 @@ func batchLogEntries(cloudwatchLogsData events.CloudwatchLogsData, channel chan 
 
 	var currentBatch common.LogData
 
+	// Regular expression to match the pattern "RequestId: <UUID> <message>"
+	regularExpression := regexp.MustCompile(common.RequestIDRegex)
+
+	// Variable to keep track of the last requestId found
+	var lastRequestID string
+
 	for _, record := range cloudwatchLogsData.LogEvents {
 		messages := util.SplitLargeMessages(record.Message)
-
 		for _, message := range messages {
+
+			// logAttribute is a map of attributes for each individual log message.
+			logAttribute := common.LogAttributes{}
+
 			entry := common.Log{
-				Timestamp: strconv.FormatInt(record.Timestamp, 10),
-				Log:       message,
+				Timestamp:  strconv.FormatInt(record.Timestamp, 10),
+				Log:        message,
+				Attributes: logAttribute,
 			}
+			lastRequestID = util.AddRequestID(cloudwatchLogsData.LogGroup, message, logAttribute, lastRequestID, regularExpression)
 
 			if batchSize+len(message) > common.MaxPayloadSize || messageCount >= common.MaxPayloadMessages {
 				util.ProduceMessageToChannel(channel, currentBatch, attributes)
