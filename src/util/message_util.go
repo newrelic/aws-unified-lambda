@@ -97,19 +97,19 @@ func ParseCloudTrailEvents(message string) ([]string, error) {
 	return records, nil
 }
 
-// AddRequestId extracts the requestId from the message and updates the attributes map.
+// AddRequestID extracts the requestId from the message and updates the attributes map.
 // It returns the last requestId found to keep track of the requestId across log messages.
-func AddRequestId(logGroup, message string, attributes common.LogAttributes, lastRequestId string, regularExpression *regexp.Regexp) string {
+func AddRequestID(logGroup, message string, attributes common.LogAttributes, lastRequestID string, regularExpression *regexp.Regexp) string {
 
 	if strings.HasPrefix(logGroup, common.LambdaLogGroup) {
 		matches := regularExpression.FindStringSubmatch(message)
 		if len(matches) == 2 {
-			lastRequestId = matches[1]
-			attributes["requestId"] = lastRequestId
-		} else if lastRequestId != "" {
-			attributes["requestId"] = lastRequestId
+			lastRequestID = matches[1]
+			attributes["requestId"] = lastRequestID
+		} else if lastRequestID != "" {
+			attributes["requestId"] = lastRequestID
 		}
 	}
 
-	return lastRequestId
+	return lastRequestID
 }

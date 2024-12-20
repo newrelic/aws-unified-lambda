@@ -57,7 +57,7 @@ func batchLogEntries(cloudwatchLogsData events.CloudwatchLogsData, channel chan 
 	regularExpression := regexp.MustCompile(common.RequestIDRegex)
 
 	// Variable to keep track of the last requestId found
-	var lastRequestId string
+	var lastRequestID string
 
 	for _, record := range cloudwatchLogsData.LogEvents {
 		messages := util.SplitLargeMessages(record.Message)
@@ -68,7 +68,7 @@ func batchLogEntries(cloudwatchLogsData events.CloudwatchLogsData, channel chan 
 				Log:       message,
 			}
 
-			lastRequestId = util.AddRequestId(cloudwatchLogsData.LogGroup, message, attributes, lastRequestId, regularExpression)
+			lastRequestID = util.AddRequestID(cloudwatchLogsData.LogGroup, message, attributes, lastRequestID, regularExpression)
 
 			if batchSize+len(message) > common.MaxPayloadSize || messageCount >= common.MaxPayloadMessages {
 				util.ProduceMessageToChannel(channel, currentBatch, attributes)

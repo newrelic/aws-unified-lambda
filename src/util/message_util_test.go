@@ -219,8 +219,8 @@ func TestAddRequestId(t *testing.T) {
 		logGroup       string
 		message        string
 		attributes     common.LogAttributes
-		lastRequestId  string
-		expectedReqId  string
+		lastRequestID  string
+		expectedReqID  string
 		expectedAttrib common.LogAttributes
 	}{
 		{
@@ -228,8 +228,8 @@ func TestAddRequestId(t *testing.T) {
 			logGroup:      "/aws/lambda/test",
 			message:       "RequestId: d653fb2c-0234-46ff-ae6b-9a418b888420 hello world",
 			attributes:    common.LogAttributes{},
-			lastRequestId: "",
-			expectedReqId: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			lastRequestID: "",
+			expectedReqID: "d653fb2c-0234-46ff-ae6b-9a418b888420",
 			expectedAttrib: common.LogAttributes{
 				"requestId": "d653fb2c-0234-46ff-ae6b-9a418b888420",
 			},
@@ -239,8 +239,8 @@ func TestAddRequestId(t *testing.T) {
 			logGroup:      "/aws/lambda/test",
 			message:       "hello world",
 			attributes:    common.LogAttributes{},
-			lastRequestId: "d653fb2c-0234-46ff-ae6b-9a418b888420",
-			expectedReqId: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			lastRequestID: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			expectedReqID: "d653fb2c-0234-46ff-ae6b-9a418b888420",
 			expectedAttrib: common.LogAttributes{
 				"requestId": "d653fb2c-0234-46ff-ae6b-9a418b888420",
 			},
@@ -250,8 +250,8 @@ func TestAddRequestId(t *testing.T) {
 			logGroup:       "/aws/lambda/test",
 			message:        "hello world",
 			attributes:     common.LogAttributes{},
-			lastRequestId:  "",
-			expectedReqId:  "",
+			lastRequestID:  "",
+			expectedReqID:  "",
 			expectedAttrib: common.LogAttributes{},
 		},
 		{
@@ -259,8 +259,8 @@ func TestAddRequestId(t *testing.T) {
 			logGroup:       "/aws/other/test",
 			message:        "RequestId: d653fb2c-0234-46ff-ae6b-9a418b888420 hello world",
 			attributes:     common.LogAttributes{},
-			lastRequestId:  "",
-			expectedReqId:  "",
+			lastRequestID:  "",
+			expectedReqID:  "",
 			expectedAttrib: common.LogAttributes{},
 		},
 	}
@@ -270,8 +270,8 @@ func TestAddRequestId(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotReqId := AddRequestId(tt.logGroup, tt.message, tt.attributes, tt.lastRequestId, re)
-			assert.Equal(t, tt.expectedReqId, gotReqId)
+			gotReqID := AddRequestID(tt.logGroup, tt.message, tt.attributes, tt.lastRequestID, re)
+			assert.Equal(t, tt.expectedReqID, gotReqID)
 			assert.Equal(t, tt.expectedAttrib, tt.attributes)
 		})
 	}
