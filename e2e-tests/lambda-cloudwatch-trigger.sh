@@ -33,11 +33,11 @@ validate_stack_resources() {
 }
 
 cat <<EOF > parameter.json
-'[{"LogGroupName":"anusha-firehose"}]'
+'[{"LogGroupName":"$LOG_GROUP_NAME",FilterPattern:"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
 LOG_GROUP_NAMES=$(<parameter.json)
 
 deploy_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "''" "$LOG_GROUP_NAMES" "''"
 validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
-validate_stack_resources "$CLOUDWATCH_TRIGGER_CASE" "anusha-firehose" "hello"
-delete_stack "$CLOUDWATCH_TRIGGER_CASE"
+validate_stack_resources "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
+#delete_stack "$CLOUDWATCH_TRIGGER_CASE"
