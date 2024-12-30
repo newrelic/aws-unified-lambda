@@ -1,14 +1,14 @@
 #!/bin/bash
 
 TEMPLATES=(
-#  "logging-lambda-metric-polling.yaml"
-#  "logging-lambda-metric-stream.yaml"
-#  "logging-firehose-metric-polling.yaml"
-#  "logging-firehose-metric-stream.yaml"
-#  "logging-lambda-firehose-metric-polling.yaml"
-#  "logging-lambda-firehose-metric-stream.yaml"
+  "logging-lambda-metric-polling.yaml"
+  "logging-lambda-metric-stream.yaml"
+  "logging-firehose-metric-polling.yaml"
+  "logging-firehose-metric-stream.yaml"
+  "logging-lambda-firehose-metric-polling.yaml"
+  "logging-lambda-firehose-metric-stream.yaml"
   "lambda-template.yaml"
-#  "logging-lambda-firehose-template.yaml"
+  "logging-lambda-firehose-template.yaml"
 )
 
 source config-file.cfg
