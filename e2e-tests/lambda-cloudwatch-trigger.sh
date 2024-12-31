@@ -33,7 +33,7 @@ validate_stack_resources() {
 }
 
 cat <<EOF > parameter.json
-'[{"LogGroupName":"$LOG_GROUP_NAME",FilterPattern:"$LOG_GROUP_FILTER_PATTERN"}]'
+'[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
 LOG_GROUP_NAMES=$(<parameter.json)
 
