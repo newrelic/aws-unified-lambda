@@ -3,7 +3,7 @@
 source common-scripts.sh
 source config-file.cfg
 
-# test case constant
+# test case constants
 S3_TRIGGER_CASE=s3-trigger-stack-1
 
 validate_stack_resources() {
@@ -45,4 +45,4 @@ S3_BUCKET_NAMES=$(<parameter.json)
 deploy_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''" "''"
 validate_stack_deployment_status "$S3_TRIGGER_CASE"
 validate_stack_resources "$S3_TRIGGER_CASE" "$S3_BUCKET_NAME" "$S3_BUCKET_PREFIX"
-#delete_stack "$S3_TRIGGER_CASE"
+delete_stack "$S3_TRIGGER_CASE"
