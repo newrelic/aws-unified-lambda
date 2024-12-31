@@ -34,6 +34,9 @@ jobs:
           aws-region: us-east-1
 
       - name: Run e2e tests
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./build-templates.sh
