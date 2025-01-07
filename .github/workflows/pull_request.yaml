@@ -3,7 +3,7 @@ name: Pull Request Workflow
 on:
   pull_request:
     branches:
-      - main
+      - develop
 
 jobs:
   validate-template-code:
