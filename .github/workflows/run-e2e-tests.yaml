@@ -39,8 +39,8 @@ jobs:
         run: |
           cd e2e-tests/
           ./build-templates.sh
-          ./lambda-cloudwatch-trigger.sh &
-          ./lambda-s3-trigger.sh &
+          ./lambda-cloudwatch-trigger.sh
+          ./lambda-s3-trigger.sh
 
       - name: Delete Resources
         env:
