@@ -1,15 +1,8 @@
 #!/bin/bash
 
-TEMPLATES=(
-  "logging-lambda-metric-polling.yaml"
-  "logging-lambda-metric-stream.yaml"
-  "logging-firehose-metric-polling.yaml"
-  "logging-firehose-metric-stream.yaml"
-  "logging-lambda-firehose-metric-polling.yaml"
-  "logging-lambda-firehose-metric-stream.yaml"
-  "lambda-template.yaml"
-  "logging-lambda-firehose-template.yaml"
-)
+# add all templates for subsequent test cases
+# make packaging and publishing of templates more efficient so every time new al2 env is not spun up
+TEMPLATES=("lambda-template.yaml")
 
 source config-file.cfg
 
