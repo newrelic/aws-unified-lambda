@@ -35,7 +35,7 @@ validate_lambda_s3_trigger_created() {
   bucket_name=$2
   bucket_prefix=$3
 
-  lambda_function_arn=$(./common-scripts.sh get_lambda_function_arn "$stack_name")
+  lambda_function_arn=$(get_lambda_function_arn "$stack_name")
 
   notification_configuration=$(aws s3api get-bucket-notification-configuration --bucket "$bucket_name")
 
@@ -60,4 +60,4 @@ S3_BUCKET_NAMES=$(<s3-parameter.json)
 deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
 validate_stack_deployment_status "$S3_TRIGGER_CASE"
 validate_lambda_s3_trigger_created "$S3_TRIGGER_CASE" "$S3_BUCKET_NAME" "$S3_BUCKET_PREFIX"
-#delete_stack "$S3_TRIGGER_CASE"
+delete_stack "$S3_TRIGGER_CASE"

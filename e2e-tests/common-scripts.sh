@@ -52,12 +52,12 @@ get_lambda_function_arn() {
                     --logical-resource-id "$LAMBDA_LOGICAL_RESOURCE_ID" \
                     --query "StackResources[0].PhysicalResourceId" \
                     --output text
-    )
+  )
 
-    lambda_function_arn=$(aws lambda get-function --function-name "$lambda_physical_id" \
-                    --query "Configuration.FunctionArn" \
-                    --output text
-    )
+  lambda_function_arn=$(aws lambda get-function --function-name "$lambda_physical_id" \
+                  --query "Configuration.FunctionArn" \
+                  --output text
+  )
 
-    echo "$lambda_function_arn"
+  echo "$lambda_function_arn"
 }
