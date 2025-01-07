@@ -35,7 +35,7 @@ validate_lambda_s3_trigger_created() {
   bucket_name=$2
   bucket_prefix=$3
 
-  lambda_function_arn=$(./common-scripts.sh get_lambda_function_arn)
+  lambda_function_arn=$(./common-scripts.sh get_lambda_function_arn "$stack_name")
 
   notification_configuration=$(aws s3api get-bucket-notification-configuration --bucket "$bucket_name")
 

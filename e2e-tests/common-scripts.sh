@@ -45,6 +45,8 @@ exit_with_error() {
 }
 
 get_lambda_function_arn() {
+  stack_name=$1
+
   lambda_physical_id=$(aws cloudformation describe-stack-resources \
                     --stack-name "$stack_name" \
                     --logical-resource-id "$LAMBDA_LOGICAL_RESOURCE_ID" \

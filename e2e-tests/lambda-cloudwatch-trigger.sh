@@ -35,7 +35,7 @@ validate_lambda_subscription_created() {
   log_group_name=$2
   log_group_filter=$3
 
-  lambda_function_arn=$(./common-scripts.sh get_lambda_function_arn)
+  lambda_function_arn=$(./common-scripts.sh get_lambda_function_arn "$stack_name")
 
   subscriptions=$(aws logs describe-subscription-filters --log-group-name "$log_group_name" --query 'subscriptionFilters[*].[destinationArn, filterPattern]' --output text)
 
