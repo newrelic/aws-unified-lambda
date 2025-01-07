@@ -35,7 +35,7 @@ validate_lambda_subscription_created() {
   log_group_name=$2
   log_group_filter=$3
 
-  lambda_function_arn=$(./common-scripts.sh get_lambda_function_arn "$stack_name")
+  lambda_function_arn=$(get_lambda_function_arn "$stack_name")
 
   subscriptions=$(aws logs describe-subscription-filters --log-group-name "$log_group_name" --query 'subscriptionFilters[*].[destinationArn, filterPattern]' --output text)
 
@@ -55,4 +55,4 @@ LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
 deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
 validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
 validate_lambda_subscription_created "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
-#delete_stack "$CLOUDWATCH_TRIGGER_CASE"
+delete_stack "$CLOUDWATCH_TRIGGER_CASE"
