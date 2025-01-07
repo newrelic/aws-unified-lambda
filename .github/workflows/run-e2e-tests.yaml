@@ -40,8 +40,16 @@ jobs:
         run: |
           cd e2e-tests/
           ./build-templates.sh
-          ./lambda-cloudwatch-trigger.sh
-          ./lambda-s3-trigger.sh
+          
+          # Run trigger s3 and cloudwatch trigger tests parallely
+          ./lambda-cloudwatch-trigger.sh &
+          pid1=$!
+          
+          ./lambda-s3-trigger.sh &
+          pid2=$!
+          
+          wait $pid1
+          wait $pid2
 
       - name: Delete Resources
         env:
