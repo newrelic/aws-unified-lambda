@@ -3,7 +3,7 @@ name: Release Workflow
 on:
   pull_request:
     branches:
-      - main
+      - develop
 
 jobs:
   run-e2e-tests:
