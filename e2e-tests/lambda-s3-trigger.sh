@@ -52,10 +52,10 @@ validate_lambda_s3_trigger_created() {
   fi
 }
 
-cat <<EOF > parameter.json
+cat <<EOF > s3-parameter.json
 '[{"bucket":"$S3_BUCKET_NAME","prefix":"$S3_BUCKET_PREFIX"}]'
 EOF
-S3_BUCKET_NAMES=$(<parameter.json)
+S3_BUCKET_NAMES=$(<s3-parameter.json)
 
 deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
 validate_stack_deployment_status "$S3_TRIGGER_CASE"

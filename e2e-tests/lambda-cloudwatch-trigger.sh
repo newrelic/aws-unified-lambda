@@ -47,10 +47,10 @@ validate_lambda_subscription_created() {
 
 }
 
-cat <<EOF > parameter.json
+cat <<EOF > cloudwatch-parameter.json
 '[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
-LOG_GROUP_NAMES=$(<parameter.json)
+LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
 
 deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
 validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
