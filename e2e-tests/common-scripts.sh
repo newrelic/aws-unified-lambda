@@ -1,29 +1,6 @@
 #!/bin/bash
 
-deploy_stack() {
-  template_file=$1
-  stack_name=$2
-  license_key=$3
-  new_relic_region=$4
-  new_relic_account_id=$5
-  secret_license_key=$6
-  s3_bucket_names=$7
-  log_group_config=$8
-  common_attributes=$9
-
-  sam deploy \
-    --template-file "$template_file" \
-    --stack-name "$stack_name" \
-    --parameter-overrides \
-      LicenseKey="$license_key" \
-      NewRelicRegion="$new_relic_region" \
-      NewRelicAccountId="$new_relic_account_id" \
-      StoreNRLicenseKeyInSecretManager="$secret_license_key" \
-      S3BucketNames="$s3_bucket_names" \
-      LogGroupConfig="$log_group_config" \
-      CommonAttributes="$common_attributes" \
-    --capabilities CAPABILITY_IAM
-}
+source config-file.cfg
 
 validate_stack_deployment_status() {
   stack_name=$1
@@ -65,4 +42,20 @@ delete_stack() {
 exit_with_error() {
   echo "Error: $1"
   exit 1
+}
+
+get_lambda_function_arn() {
+  lambda_physical_id=$(aws cloudformation describe-stack-resources \
+                    --stack-name "$stack_name" \
+                    --logical-resource-id "$LAMBDA_LOGICAL_RESOURCE_ID" \
+                    --query "StackResources[0].PhysicalResourceId" \
+                    --output text
+    )
+
+    lambda_function_arn=$(aws lambda get-function --function-name "$lambda_physical_id" \
+                    --query "Configuration.FunctionArn" \
+                    --output text
+    )
+
+    echo "$lambda_function_arn"
 }

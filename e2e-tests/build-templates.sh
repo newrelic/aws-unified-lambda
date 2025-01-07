@@ -22,4 +22,3 @@ for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
   sam package --s3-bucket "$S3_BUCKET" --template-file "$BUILD_DIR/template.yaml" --output-template-file "$BUILD_DIR/$TEMPLATE_FILE"
 
 done
-

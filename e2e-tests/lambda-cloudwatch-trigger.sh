@@ -4,23 +4,38 @@ source common-scripts.sh
 source config-file.cfg
 
 # test case constants
-CLOUDWATCH_TRIGGER_CASE=cloudwatch-trigger-stack-1
+CLOUDWATCH_TRIGGER_CASE=e2e-cloudwatch-trigger-stack
 
-validate_stack_resources() {
+deploy_cloudwatch_trigger_stack() {
+  template_file=$1
+  stack_name=$2
+  license_key=$3
+  new_relic_region=$4
+  new_relic_account_id=$5
+  secret_license_key=$6
+  log_group_config=$7
+  common_attributes=$8
+
+  sam deploy \
+    --template-file "$template_file" \
+    --stack-name "$stack_name" \
+    --parameter-overrides \
+      LicenseKey="$license_key" \
+      NewRelicRegion="$new_relic_region" \
+      NewRelicAccountId="$new_relic_account_id" \
+      StoreNRLicenseKeyInSecretManager="$secret_license_key" \
+      S3BucketNames="''" \
+      LogGroupConfig="$log_group_config" \
+      CommonAttributes="$common_attributes" \
+    --capabilities CAPABILITY_IAM
+}
+
+validate_lambda_subscription_created() {
   stack_name=$1
   log_group_name=$2
   log_group_filter=$3
 
-  lambda_physical_id=$(aws cloudformation describe-stack-resources \
-                  --stack-name "$stack_name" \
-                  --logical-resource-id "$LAMBDA_LOGICAL_RESOURCE_ID" \
-                  --query "StackResources[0].PhysicalResourceId" \
-                  --output text
-  )
-  lambda_function_arn=$(aws lambda get-function --function-name "$lambda_physical_id" \
-                  --query "Configuration.FunctionArn" \
-                  --output text
-  )
+  lambda_function_arn=$(./common-scripts.sh get_lambda_function_arn)
 
   subscriptions=$(aws logs describe-subscription-filters --log-group-name "$log_group_name" --query 'subscriptionFilters[*].[destinationArn, filterPattern]' --output text)
 
@@ -37,7 +52,7 @@ cat <<EOF > parameter.json
 EOF
 LOG_GROUP_NAMES=$(<parameter.json)
 
-deploy_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "''" "$LOG_GROUP_NAMES" "''"
+deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
 validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
-validate_stack_resources "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
-delete_stack "$CLOUDWATCH_TRIGGER_CASE"
+validate_lambda_subscription_created "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
+#delete_stack "$CLOUDWATCH_TRIGGER_CASE"
