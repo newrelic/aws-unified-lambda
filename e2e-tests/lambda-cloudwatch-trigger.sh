@@ -31,6 +31,8 @@ deploy_cloudwatch_trigger_stack() {
 }
 
 validate_lambda_subscription_created() {
+    # this function fetches cloudwatch subscriptions and
+    # validates if lambda subscription filter is configured
   stack_name=$1
   log_group_name=$2
   log_group_filter=$3

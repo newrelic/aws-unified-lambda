@@ -31,6 +31,8 @@ deploy_s3_trigger_stack() {
 }
 
 validate_lambda_s3_trigger_created() {
+  # this function fetches bucket configurations and
+  # validates if lambda event notification is configured
   stack_name=$1
   bucket_name=$2
   bucket_prefix=$3

@@ -24,9 +24,18 @@ delete_stack() {
 
   stack_status=$(aws cloudformation describe-stacks --stack-name "$stack_name" --query 'Stacks[0].StackStatus' --output text)
 
+  # delete stack with exponential back off retires
+  max_sleep_time=300  # Cap sleep time to 5 minutes
+  sleep_time=30
+
   while [[ $stack_status == "DELETE_IN_PROGRESS" ]]; do
     echo "Stack $stack_name is still being deleted..."
-    sleep 60
+
+    sleep $sleep_time
+    if (( sleep_time < max_sleep_time )); then
+      sleep_time=$(( sleep_time * 2 ))
+    fi
+
     stack_status=$(aws cloudformation describe-stacks --stack-name "$stack_name" --query 'Stacks[0].StackStatus' --output text 2>/dev/null || true)
   done
 
