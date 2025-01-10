@@ -78,19 +78,16 @@ create_cloudwatch_log_event() {
 
   echo "Creating log event in CloudWatch Log Group"
 
-  # Check if the log stream exists
+  # Check if the log stream exists else create one
   log_stream_exists=$(aws logs describe-log-streams --log-group-name "$log_group_name" --log-stream-name-prefix "$log_stream_name" --query "logStreams[?logStreamName=='$log_stream_name'] | length(@)" --output text)
 
-  if [ $log_stream_exists -eq 0 ]; then
+  if [ -n "$log_stream_exists" ] && [ "$log_stream_exists" -eq 0 ]; then
+    echo "Log stream does not exist. Creating log stream: $log_stream_name"
     aws logs create-log-stream --log-group-name "$log_group_name" --log-stream-name "$log_stream_name"
-  else
-    exit_with_error "Cloudwatch log stream: $log_stream_name in group: $log_group_name doesn't exist"
   fi
 
-  # Get the current timestamp in milliseconds
   timestamp=$(($(date +%s) * 1000 + $(date +%N) / 1000000))
 
-  # Put log event
   aws logs put-log-events \
     --log-group-name "$log_group_name" \
     --log-stream-name "$log_stream_name" \
