@@ -40,21 +40,4 @@ jobs:
         run: |
           cd e2e-tests/
           ./build-templates.sh
-          
-          echo "Running s3 and cloudwatch trigger tests parallely"
-          ./lambda-cloudwatch-trigger.sh &
-          pid1=$!
-          echo "cloudwatch trigger PID: $pid1"
-          
-#          ./lambda-s3-trigger.sh &
-#          pid2=$!
-#          echo "s3 trigger PID: $pid2"
-          
-          wait $pid1
-#          wait $pid2
-
-#      - name: Delete Resources
-#        env:
-#          S3_BUCKET: unified-lambda-e2e-test-templates
-#        run:
-#          aws s3 rm "s3://$S3_BUCKET" --recursive
+          ./lambda-cloudwatch-trigger.sh
