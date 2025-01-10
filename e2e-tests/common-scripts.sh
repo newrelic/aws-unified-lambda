@@ -103,9 +103,9 @@ validate_logs_in_new_relic() {
   log_message=$4
 
   sleep_time=$SLEEP_TIME
-  i=1
+  attempt=1
 
-  while i < "$MAX_RETRIES"; do
+  while [[ $attempt -lt $MAX_RETRIES ]]; do
     echo "Fetching logs from new relic for stream name: $stream_name"
 
     response=$(fetch_new_relic_logs_api "$stack_name")
@@ -121,7 +121,7 @@ validate_logs_in_new_relic() {
       fi
     fi
 
-    i=$((i + 1))
+    attempt=$((attempt + 1))
   done
   exit_with_error "Log event with stream name: $stream_name not found in New Relic."
 }
