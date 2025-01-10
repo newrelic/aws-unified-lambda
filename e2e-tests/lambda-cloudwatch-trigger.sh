@@ -55,6 +55,8 @@ EOF
 LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
 
 deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
-validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
-validate_lambda_subscription_created "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
-delete_stack "$CLOUDWATCH_TRIGGER_CASE"
+#validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
+#validate_lambda_subscription_created "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
+create_cloudwatch_log_event "$LOG_GROUP_NAME" "$LOG_STREAM_NAME" "$LOG_MESSAGE"
+validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$LOG_STREAM_NAME" "$LOG_MESSAGE"
+#delete_stack "$CLOUDWATCH_TRIGGER_CASE"

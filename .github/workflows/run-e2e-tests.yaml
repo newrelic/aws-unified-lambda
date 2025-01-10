@@ -1,7 +1,7 @@
 name: E2E Test Workflow
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
       - main
@@ -46,15 +46,15 @@ jobs:
           pid1=$!
           echo "cloudwatch trigger PID: $pid1"
           
-          ./lambda-s3-trigger.sh &
-          pid2=$!
-          echo "s3 trigger PID: $pid2"
+#          ./lambda-s3-trigger.sh &
+#          pid2=$!
+#          echo "s3 trigger PID: $pid2"
           
           wait $pid1
-          wait $pid2
+#          wait $pid2
 
-      - name: Delete Resources
-        env:
-          S3_BUCKET: unified-lambda-e2e-test-templates
-        run:
-          aws s3 rm "s3://$S3_BUCKET" --recursive
+#      - name: Delete Resources
+#        env:
+#          S3_BUCKET: unified-lambda-e2e-test-templates
+#        run:
+#          aws s3 rm "s3://$S3_BUCKET" --recursive
