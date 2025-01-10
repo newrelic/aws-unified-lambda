@@ -1,7 +1,7 @@
 name: E2E Test Workflow
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
       - main
@@ -44,11 +44,11 @@ jobs:
           echo "Running s3 and cloudwatch trigger tests parallely"
           ./lambda-cloudwatch-trigger.sh &
           pid1=$!
-          echo "cloudwatch trigger PID: $pid1"
+          echo "Testing setting up cloudwatch trigger with PID: $pid1"
           
           ./lambda-s3-trigger.sh &
           pid2=$!
-          echo "s3 trigger PID: $pid2"
+          echo "Testing setting up s3 trigger with PID: $pid2"
           
           wait $pid1
           wait $pid2

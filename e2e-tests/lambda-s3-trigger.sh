@@ -16,6 +16,8 @@ deploy_s3_trigger_stack() {
   s3_bucket_names=$7
   common_attributes=$8
 
+  echo "Deploying s3 trigger stack with name: $stack_name"
+
   sam deploy \
     --template-file "$template_file" \
     --stack-name "$stack_name" \
@@ -36,6 +38,8 @@ validate_lambda_s3_trigger_created() {
   stack_name=$1
   bucket_name=$2
   bucket_prefix=$3
+
+  echo "Validating s3 lambda trigger event for stack name: $stack_name, bucket name: $bucket_name, and prefix: $bucket_prefix"
 
   lambda_function_arn=$(get_lambda_function_arn "$stack_name")
 
@@ -58,6 +62,7 @@ cat <<EOF > s3-parameter.json
 '[{"bucket":"$S3_BUCKET_NAME","prefix":"$S3_BUCKET_PREFIX"}]'
 EOF
 S3_BUCKET_NAMES=$(<s3-parameter.json)
+echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
 
 deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
 validate_stack_deployment_status "$S3_TRIGGER_CASE"

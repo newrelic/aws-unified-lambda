@@ -16,6 +16,8 @@ deploy_cloudwatch_trigger_stack() {
   log_group_config=$7
   common_attributes=$8
 
+  echo "Deploying cloudwatch trigger stack with name: $stack_name"
+
   sam deploy \
     --template-file "$template_file" \
     --stack-name "$stack_name" \
@@ -31,11 +33,13 @@ deploy_cloudwatch_trigger_stack() {
 }
 
 validate_lambda_subscription_created() {
-    # this function fetches cloudwatch subscriptions and
-    # validates if lambda subscription filter is configured
+  # this function fetches cloudwatch subscriptions and
+  # validates if lambda subscription filter is configured
   stack_name=$1
   log_group_name=$2
   log_group_filter=$3
+
+  echo "Validating cloudwatch lambda subscription for stack name: $stack_name, log group name: $log_group_name, and log group filter: $log_group_filter"
 
   lambda_function_arn=$(get_lambda_function_arn "$stack_name")
 
@@ -53,6 +57,7 @@ cat <<EOF > cloudwatch-parameter.json
 '[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
 LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
+echo "Testing for log group configuration JSON: $(<cloudwatch-parameter.json)"
 
 deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
 validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"

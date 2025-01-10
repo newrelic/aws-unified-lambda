@@ -5,6 +5,8 @@ source config-file.cfg
 validate_stack_deployment_status() {
   stack_name=$1
 
+  echo "Validating stack deployment status for stack name: $stack_name"
+
   stack_status=$(aws cloudformation describe-stacks --stack-name "$stack_name" --query "Stacks[0].StackStatus" --output text)
   if [[ "$stack_status" == "ROLLBACK_COMPLETE" || "$stack_status" == "ROLLBACK_FAILED" || "$stack_status" == "CREATE_FAILED"  || "$stack_status" == "UPDATE_FAILED" ]]; then
     echo "Stack $stack_name failed to be created and rolled back."
