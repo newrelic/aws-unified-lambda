@@ -72,3 +72,76 @@ get_lambda_function_arn() {
 
   echo "$lambda_function_arn"
 }
+
+create_cloudwatch_log_event() {
+  log_group_name=$1
+  log_stream_name=$2
+  log_message=$3
+
+  echo "Creating log event in CloudWatch Log Group"
+
+  # Check if the log stream exists else create one
+  log_stream_exists=$(aws logs describe-log-streams --log-group-name "$log_group_name" --log-stream-name-prefix "$log_stream_name" --query "logStreams[?logStreamName=='$log_stream_name'] | length(@)" --output text)
+
+  if [ -n "$log_stream_exists" ] && [ "$log_stream_exists" -eq 0 ]; then
+    echo "Log stream does not exist. Creating log stream: $log_stream_name"
+    # create stream if it doesn't exist
+    aws logs create-log-stream --log-group-name "$log_group_name" --log-stream-name "$log_stream_name"
+  fi
+
+  timestamp=$(($(date +%s) * 1000 + $(date +%N) / 1000000))
+
+  aws logs put-log-events \
+    --log-group-name "$log_group_name" \
+    --log-stream-name "$log_stream_name" \
+    --log-events timestamp=$timestamp,message="$log_message"
+
+  echo "Log event with message: $log_message created successfully."
+}
+
+validate_logs_in_new_relic() {
+  user_key=$1
+  account_id=$2
+  stream_name=$3
+  log_message=$4
+
+  sleep_time=$SLEEP_TIME
+  attempt=1
+
+  while [[ $attempt -lt $MAX_RETRIES ]]; do
+    echo "Fetching logs from new relic for stream name: $stream_name"
+
+    response=$(fetch_new_relic_logs_api "$user_key" "$account_id" "$stream_name")
+
+    if echo "$response" | grep -q "$log_message"; then
+      echo "Log event successfully found in New Relic."
+      return 0
+    else
+      echo "Log event not found in New Relic. Retrying in $sleep_time seconds..."
+      sleep "$sleep_time"
+      if (( sleep_time < MAX_SLEEP_TIME )); then
+        sleep_time=$(( sleep_time * 2 ))
+      fi
+    fi
+
+    attempt=$((attempt + 1))
+  done
+  exit_with_error "Log event with stream name: $stream_name not found in New Relic. Error: $response"
+}
+
+fetch_new_relic_logs_api() {
+  user_key=$1
+  account_id=$2
+  stream_name=$3
+
+  nrql_query="SELECT * FROM Log WHERE $ATTRIBUTE_KEY LIKE '%$stream_name%' SINCE $TIME_RANGE ago"
+  query='{"query":"query($id: Int!, $nrql: Nrql!) { actor { account(id: $id) { nrql(query: $nrql) { results } } } }","variables":{"id":'$account_id',"nrql":"'$nrql_query'"}}'
+
+  response=$(curl -s -X POST \
+    -H "Content-Type: application/json" \
+    -H "API-Key: $user_key" \
+    -d "$query" \
+    https://api.newrelic.com/graphql)
+
+  echo "$response"
+}
