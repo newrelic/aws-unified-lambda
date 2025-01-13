@@ -99,6 +99,14 @@ create_cloudwatch_log_event() {
   echo "Log event with message: $log_message created successfully."
 }
 
+upload_file_to_s3_bucket() {
+  bucket_name=$1
+  file_path=$2
+  prefix=$3
+
+  aws s3 cp "$file_path" "s3://$bucket_name/$prefix"
+}
+
 validate_logs_in_new_relic() {
   user_key=$1
   account_id=$2
