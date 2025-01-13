@@ -123,7 +123,7 @@ validate_logs_in_new_relic() {
 
     attempt=$((attempt + 1))
   done
-  exit_with_error "Log event with stream name: $stream_name not found in New Relic."
+  exit_with_error "Log event with stream name: $stream_name not found in New Relic. Error: $response"
 }
 
 fetch_new_relic_logs_api() {
