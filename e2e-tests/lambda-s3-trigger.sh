@@ -64,7 +64,7 @@ EOF
 S3_BUCKET_NAMES=$(<s3-parameter.json)
 echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
 
-deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
+#deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
 #validate_stack_deployment_status "$S3_TRIGGER_CASE"
 #validate_lambda_s3_trigger_created "$S3_TRIGGER_CASE" "$S3_BUCKET_NAME" "$S3_BUCKET_PREFIX"
 upload_file_to_s3_bucket "$S3_BUCKET_NAME" "$FILE_PATH" "$S3_BUCKET_PREFIX"
