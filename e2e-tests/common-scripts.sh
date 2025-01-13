@@ -134,6 +134,8 @@ fetch_new_relic_logs_api() {
   account_id=$2
   stream_name=$3
 
+  echo "keys are $user_key"
+
   nrql_query="SELECT * FROM Log WHERE $ATTRIBUTE_KEY LIKE '%$stream_name%' SINCE $TIME_RANGE ago"
   query='{"query":"query($id: Int!, $nrql: Nrql!) { actor { account(id: $id) { nrql(query: $nrql) { results } } } }","variables":{"id":'$account_id',"nrql":"'$nrql_query'"}}'
 
