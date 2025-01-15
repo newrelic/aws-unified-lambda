@@ -142,8 +142,6 @@ fetch_new_relic_logs_api() {
   attribute_key=$3
   attribute_value=$4
 
-  echo "keys are $user_key"
-
   nrql_query="SELECT * FROM Log WHERE $attribute_key LIKE '%$attribute_value%' SINCE $TIME_RANGE ago"
   query='{"query":"query($id: Int!, $nrql: Nrql!) { actor { account(id: $id) { nrql(query: $nrql) { results } } } }","variables":{"id":'$account_id',"nrql":"'$nrql_query'"}}'
 
