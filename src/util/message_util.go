@@ -104,8 +104,8 @@ func AddRequestID(message string, logAttribute common.LogAttributes, lastRequest
 	var jsonMessage map[string]interface{}
 	if err := json.Unmarshal([]byte(message), &jsonMessage); err == nil {
 		// Message is in JSON format
-		if requestId, ok := ExtractRequestIDFromJSON(jsonMessage); ok {
-			lastRequestID = requestId
+		if requestID, ok := ExtractRequestIDFromJSON(jsonMessage); ok {
+			lastRequestID = requestID
 			logAttribute["requestId"] = lastRequestID
 		} else if lastRequestID != "" {
 			logAttribute["requestId"] = lastRequestID
@@ -128,12 +128,12 @@ func AddRequestID(message string, logAttribute common.LogAttributes, lastRequest
 // It returns the requestId and a boolean indicating if the requestId was found.
 // The function handle both the cases where the requestId is at the top level or inside the record.requestId.
 func ExtractRequestIDFromJSON(jsonMessage map[string]interface{}) (string, bool) {
-	if requestId, ok := jsonMessage["requestId"].(string); ok {
-		return requestId, true
+	if requestID, ok := jsonMessage["requestId"].(string); ok {
+		return requestID, true
 	}
 	if record, ok := jsonMessage["record"].(map[string]interface{}); ok {
-		if requestId, ok := record["requestId"].(string); ok {
-			return requestId, true
+		if requestID, ok := record["requestId"].(string); ok {
+			return requestID, true
 		}
 	}
 	return "", false
