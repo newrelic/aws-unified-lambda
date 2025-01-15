@@ -89,10 +89,12 @@ create_cloudwatch_log_event() {
     aws logs create-log-stream --log-group-name "$log_group_name" --log-stream-name "$log_stream_name"
   fi
 
+  timestamp=$(($(date +%s%3N)))
+
   aws logs put-log-events \
     --log-group-name "$log_group_name" \
     --log-stream-name "$log_stream_name" \
-    --log-events message="$log_message"
+    --log-events timestamp=$timestamp,message="$log_message"
 
   echo "Log event with message: $log_message created successfully."
 }
