@@ -89,6 +89,7 @@ create_cloudwatch_log_event() {
     aws logs create-log-stream --log-group-name "$log_group_name" --log-stream-name "$log_stream_name"
   fi
 
+  # log events require timestamp as mandatory parameter
   timestamp=$(($(date +%s%3N)))
 
   aws logs put-log-events \
@@ -119,22 +120,21 @@ validate_logs_in_new_relic() {
 
   while [[ $attempt -lt $MAX_RETRIES ]]; do
     echo "Fetching logs from new relic for $attribute_key: $attribute_value"
-
+    sleep "$sleep_time"
     response=$(fetch_new_relic_logs_api "$user_key" "$account_id" "$attribute_key" "$attribute_value")
 
     if echo "$response" | grep -q "$log_message"; then
       echo "Log event successfully found in New Relic."
       return 0
-    else
-      echo "Log event not found in New Relic. Retrying in $sleep_time seconds..."
-      sleep "$sleep_time"
-      if (( sleep_time < MAX_SLEEP_TIME )); then
-        sleep_time=$(( sleep_time * 2 ))
-      fi
     fi
 
+    if (( sleep_time < MAX_SLEEP_TIME )); then
+      sleep_time=$(( sleep_time * 2 ))
+    fi
+    echo "Log event not found in New Relic. Retrying in $sleep_time seconds..."
     attempt=$((attempt + 1))
   done
+
   exit_with_error "Log event with $attribute_key: $attribute_value not found in New Relic. Error Received: $response"
 }
 

@@ -39,6 +39,7 @@ jobs:
           S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
           cd e2e-tests/
+          ./build-templates.sh
           
           echo "Running s3 and cloudwatch trigger tests parallely"
           ./lambda-cloudwatch-trigger.sh &
