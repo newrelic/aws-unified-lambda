@@ -110,16 +110,17 @@ upload_file_to_s3_bucket() {
 validate_logs_in_new_relic() {
   user_key=$1
   account_id=$2
-  stream_name=$3
-  log_message=$4
+  attribute_key=$3
+  attribute_value=$4
+  log_message=$5
 
   sleep_time=$SLEEP_TIME
   attempt=1
 
   while [[ $attempt -lt $MAX_RETRIES ]]; do
-    echo "Fetching logs from new relic for stream name: $stream_name"
+    echo "Fetching logs from new relic for $attribute_key: $attribute_value"
 
-    response=$(fetch_new_relic_logs_api "$user_key" "$account_id" "$stream_name")
+    response=$(fetch_new_relic_logs_api "$user_key" "$account_id" "$attribute_key" "$attribute_value")
 
     if echo "$response" | grep -q "$log_message"; then
       echo "Log event successfully found in New Relic."
@@ -134,17 +135,18 @@ validate_logs_in_new_relic() {
 
     attempt=$((attempt + 1))
   done
-  exit_with_error "Log event with stream name: $stream_name not found in New Relic. Error: $response"
+  exit_with_error "Log event with $attribute_key: $attribute_value not found in New Relic. Error Received: $response"
 }
 
 fetch_new_relic_logs_api() {
   user_key=$1
   account_id=$2
-  stream_name=$3
+  attribute_key=$3
+  attribute_value=$4
 
   echo "keys are $user_key"
 
-  nrql_query="SELECT * FROM Log WHERE $ATTRIBUTE_KEY LIKE '%$stream_name%' SINCE $TIME_RANGE ago"
+  nrql_query="SELECT * FROM Log WHERE $attribute_key LIKE '%$attribute_value%' SINCE $TIME_RANGE ago"
   query='{"query":"query($id: Int!, $nrql: Nrql!) { actor { account(id: $id) { nrql(query: $nrql) { results } } } }","variables":{"id":'$account_id',"nrql":"'$nrql_query'"}}'
 
   response=$(curl -s -X POST \
