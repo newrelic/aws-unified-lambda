@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/newrelic/aws-unified-lambda-logging/common"
@@ -59,6 +60,9 @@ func batchLogEntries(cloudwatchLogsData events.CloudwatchLogsData, channel chan 
 	// Variable to keep track of the last requestId found
 	var lastRequestID string
 
+	// Check if the log group name starts with "/aws/lambda"
+	isLambdaLogGroup := strings.HasPrefix(cloudwatchLogsData.LogGroup, common.LambdaLogGroup)
+
 	for _, record := range cloudwatchLogsData.LogEvents {
 		messages := util.SplitLargeMessages(record.Message)
 		for _, message := range messages {
@@ -71,7 +75,9 @@ func batchLogEntries(cloudwatchLogsData events.CloudwatchLogsData, channel chan 
 				Log:        message,
 				Attributes: logAttribute,
 			}
-			lastRequestID = util.AddRequestID(cloudwatchLogsData.LogGroup, message, logAttribute, lastRequestID, regularExpression)
+			if isLambdaLogGroup {
+				lastRequestID = util.AddRequestID(message, logAttribute, lastRequestID, regularExpression)
+			}
 
 			if batchSize+len(message) > common.MaxPayloadSize || messageCount >= common.MaxPayloadMessages {
 				util.ProduceMessageToChannel(channel, currentBatch, attributes)

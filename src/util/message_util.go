@@ -4,7 +4,6 @@ package util
 import (
 	"encoding/json"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/newrelic/aws-unified-lambda-logging/common"
@@ -99,9 +98,20 @@ func ParseCloudTrailEvents(message string) ([]string, error) {
 
 // AddRequestID extracts the requestId from the message and updates the attributes map.
 // It returns the last requestId found to keep track of the requestId across log messages.
-func AddRequestID(logGroup, message string, logAttribute common.LogAttributes, lastRequestID string, regularExpression *regexp.Regexp) string {
+func AddRequestID(message string, logAttribute common.LogAttributes, lastRequestID string, regularExpression *regexp.Regexp) string {
 
-	if strings.HasPrefix(logGroup, common.LambdaLogGroup) {
+	// Check if the message is in JSON format
+	var jsonMessage map[string]interface{}
+	if err := json.Unmarshal([]byte(message), &jsonMessage); err == nil {
+		// Message is in JSON format
+		if requestId, ok := ExtractRequestIDFromJSON(jsonMessage); ok {
+			lastRequestID = requestId
+			logAttribute["requestId"] = lastRequestID
+		} else if lastRequestID != "" {
+			logAttribute["requestId"] = lastRequestID
+		}
+	} else {
+		// Message is in text format
 		matches := regularExpression.FindStringSubmatch(message)
 		if len(matches) == 2 {
 			lastRequestID = matches[1]
@@ -109,6 +119,22 @@ func AddRequestID(logGroup, message string, logAttribute common.LogAttributes, l
 		} else if lastRequestID != "" {
 			logAttribute["requestId"] = lastRequestID
 		}
+
 	}
 	return lastRequestID
+}
+
+// ExtractRequestIDFromJSON extracts the requestId from the JSON message.
+// It returns the requestId and a boolean indicating if the requestId was found.
+// The function handle both the cases where the requestId is at the top level or inside the record.requestId.
+func ExtractRequestIDFromJSON(jsonMessage map[string]interface{}) (string, bool) {
+	if requestId, ok := jsonMessage["requestId"].(string); ok {
+		return requestId, true
+	}
+	if record, ok := jsonMessage["record"].(map[string]interface{}); ok {
+		if requestId, ok := record["requestId"].(string); ok {
+			return requestId, true
+		}
+	}
+	return "", false
 }
