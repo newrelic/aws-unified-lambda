@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packaged-lambda-templates
-          path: .aws-sam/build
+          path: .aws-sam/build/*
 
   run-e2e-tests-cloudwatch:
     needs: build-templates
