@@ -85,7 +85,6 @@ create_cloudwatch_log_event() {
 
   if [ -n "$log_stream_exists" ] && [ "$log_stream_exists" -eq 0 ]; then
     echo "Log stream does not exist. Creating log stream: $log_stream_name"
-    # create stream if it doesn't exist
     aws logs create-log-stream --log-group-name "$log_group_name" --log-stream-name "$log_stream_name"
   fi
 
@@ -102,10 +101,23 @@ create_cloudwatch_log_event() {
 
 upload_file_to_s3_bucket() {
   bucket_name=$1
-  file_path=$2
+  log_file=$2
   prefix=$3
+  log_message=$4
 
-  aws s3 cp "$file_path" "s3://$bucket_name/$prefix"
+  echo "$log_message" >> "$log_file"
+  if [[ $? -ne 0 ]]; then
+      echo "Failed to write log to file."
+      return 1
+  fi
+
+  aws s3 cp "$log_file" "s3://$bucket_name/$prefix"
+  if [[ $? -ne 0 ]]; then
+      echo "Failed to upload log file to S3."
+      return 1
+  fi
+
+  echo "Log successfully uploaded to s3://$bucket_name/$prefix"
 }
 
 validate_logs_in_new_relic() {
@@ -154,4 +166,11 @@ fetch_new_relic_logs_api() {
     https://api.newrelic.com/graphql)
 
   echo "$response"
+}
+
+create_log_message() {
+  filter_pattern=$1
+
+  UUID=$(uuidgen)
+  echo "RequestId: $UUID hello world with filter pattern: $filter_pattern"
 }

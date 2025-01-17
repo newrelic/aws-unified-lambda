@@ -53,15 +53,19 @@ validate_lambda_subscription_created() {
 
 }
 
-cat <<EOF > cloudwatch-parameter.json
-'[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+test_logs_cloudwatch() {
+  cat <<EOF > cloudwatch-parameter.json
+  '[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
-LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
-echo "Testing for log group configuration JSON: $(<cloudwatch-parameter.json)"
+  LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
+  echo "Testing for log group configuration JSON: $(<cloudwatch-parameter.json)"
 
-deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
-validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
-validate_lambda_subscription_created "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
-create_cloudwatch_log_event "$LOG_GROUP_NAME" "$LOG_STREAM_NAME" "$LOG_MESSAGE_CLOUDWATCH"
-validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_CLOUDWATCH" "$LOG_STREAM_NAME" "$LOG_MESSAGE_CLOUDWATCH"
-delete_stack "$CLOUDWATCH_TRIGGER_CASE"
+  log_message=$(create_log_message "$LOG_MESSAGE_CLOUDWATCH" "$LOG_GROUP_FILTER_PATTERN")
+
+  deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
+  validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
+  validate_lambda_subscription_created "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
+  create_cloudwatch_log_event "$LOG_GROUP_NAME" "$LOG_STREAM_NAME" "$log_message"
+  validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_CLOUDWATCH" "$LOG_STREAM_NAME" "$LOG_MESSAGE_CLOUDWATCH"
+  delete_stack "$CLOUDWATCH_TRIGGER_CASE"
+}

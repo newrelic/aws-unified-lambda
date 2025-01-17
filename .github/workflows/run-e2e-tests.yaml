@@ -1,18 +1,17 @@
 name: E2E Test Workflow
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
       - main
 
 jobs:
-  run-e2e-tests:
+  build-templates:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,6 +31,35 @@ jobs:
           role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
           aws-region: us-east-1
 
+      - name: Build Template
+        run: |
+          cd e2e-tests/
+          ./build-templates.sh
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packaged-lambda-templates
+          path: .aws-sam/build
+
+  run-e2e-tests-cloudwatch:
+    needs: build-templates
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    strategy:
+      matrix:
+        test-case: [ test_logs_cloudwatch ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: packaged-lambda-templates
+
       - name: Run e2e tests
         env:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
@@ -39,19 +67,50 @@ jobs:
           S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
           cd e2e-tests/
-          ./build-templates.sh
-          
-          echo "Running s3 and cloudwatch trigger tests parallely"
-          ./lambda-cloudwatch-trigger.sh &
-          pid1=$!
-          echo "Testing setting up cloudwatch trigger with PID: $pid1"
-          
-          ./lambda-s3-trigger.sh &
-          pid2=$!
-          echo "Testing setting up s3 trigger with PID: $pid2"
-          
-          wait $pid1
-          wait $pid2
+          ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
+
+  run-e2e-tests-s3:
+    needs: build-templates
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    strategy:
+      matrix:
+        test-case: [ test_logs_s3 ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: packaged-lambda-templates
+
+      - name: Run e2e tests
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          S3_BUCKET: unified-lambda-e2e-test-templates
+        run: |
+          cd e2e-tests/
+          ./lambda-s3-trigger.sh ${{ matrix.test-case }}
+
+  clean-up:
+    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3]
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
+          aws-region: us-east-1
 
       - name: Delete Resources
         env:
