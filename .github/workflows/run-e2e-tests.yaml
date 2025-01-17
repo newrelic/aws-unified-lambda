@@ -7,11 +7,14 @@ on:
       - main
 
 jobs:
-  build-templates:
+  run-e2e-tests-cloudwatch:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
+    strategy:
+      matrix:
+        test-case: [ test_logs_cloudwatch ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,37 +34,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
           aws-region: us-east-1
 
-      - name: Build Template
-        env:
-          S3_BUCKET: unified-lambda-e2e-test-templates
-        run: |
-          cd e2e-tests/
-          ./build-templates.sh
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: packaged-lambda-templates
-          path: .aws-sam/build/lambda-template
-
-  run-e2e-tests-cloudwatch:
-    needs: build-templates
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    strategy:
-      matrix:
-        test-case: [ test_logs_cloudwatch ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: packaged-lambda-templates
-
       - name: Run e2e tests
         env:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
@@ -69,10 +41,10 @@ jobs:
           S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
           cd e2e-tests/
+          ./build-templates.sh
           ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
 
   run-e2e-tests-s3:
-    needs: build-templates
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -84,10 +56,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Artifact
-        uses: actions/download-artifact@v3
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          name: packaged-lambda-templates
+          go-version: '1.22'
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
+          aws-region: us-east-1
 
       - name: Run e2e tests
         env:
@@ -96,6 +78,7 @@ jobs:
           S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
           cd e2e-tests/
+          ./build-templates.yaml
           ./lambda-s3-trigger.sh ${{ matrix.test-case }}
 
   clean-up:
