@@ -1,7 +1,9 @@
 #!/bin/bash
 
-source common-scripts.sh
-source config-file.cfg
+source common-scripts/stack-scripts.sh
+source common-scripts/resource-scripts.sh
+source common-scripts/logs-scripts.sh
+source common-scripts/config-file.cfg
 
 # test case constants
 S3_TRIGGER_CASE=e2e-s3-trigger-stack
@@ -30,32 +32,6 @@ deploy_s3_trigger_stack() {
       LogGroupConfig="''" \
       CommonAttributes="$common_attributes" \
     --capabilities CAPABILITY_IAM
-}
-
-validate_lambda_s3_trigger_created() {
-  # this function fetches bucket configurations and
-  # validates if lambda event notification is configured
-  stack_name=$1
-  bucket_name=$2
-  bucket_prefix=$3
-
-  echo "Validating s3 lambda trigger event for stack name: $stack_name, bucket name: $bucket_name, and prefix: $bucket_prefix"
-
-  lambda_function_arn=$(get_lambda_function_arn "$stack_name")
-
-  notification_configuration=$(aws s3api get-bucket-notification-configuration --bucket "$bucket_name")
-
-  lambda_configurations=$(echo "$notification_configuration" |
-      jq --arg lambda "$lambda_function_arn" --arg prefix "$bucket_prefix" '
-      .LambdaFunctionConfigurations[] |
-      select(.LambdaFunctionArn == $lambda and (.Filter.Key.FilterRules[]? | select(.Name == "Prefix" and .Value == $prefix)?))')
-
-  if [ -n "$lambda_configurations" ]; then
-      echo "S3 triggers with prefix '$bucket_prefix' found for Lambda function $lambda_function_arn on bucket $bucket_name:"
-      echo "$lambda_configurations" | jq '.'
-  else
-      exit_with_error "No S3 triggers with prefix '$bucket_prefix' found for Lambda function $lambda_function_arn on bucket $bucket_name."
-  fi
 }
 
 test_logs_s3() {

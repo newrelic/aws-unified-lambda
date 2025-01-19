@@ -1,7 +1,9 @@
 #!/bin/bash
 
-source common-scripts.sh
-source config-file.cfg
+source common-scripts/stack-scripts.sh
+source common-scripts/resource-scripts.sh
+source common-scripts/logs-scripts.sh
+source common-scripts/config-file.cfg
 
 # test case constants
 CLOUDWATCH_TRIGGER_CASE=e2e-cloudwatch-trigger-stack
@@ -30,27 +32,6 @@ deploy_cloudwatch_trigger_stack() {
       LogGroupConfig="$log_group_config" \
       CommonAttributes="$common_attributes" \
     --capabilities CAPABILITY_IAM
-}
-
-validate_lambda_subscription_created() {
-  # this function fetches cloudwatch subscriptions and
-  # validates if lambda subscription filter is configured
-  stack_name=$1
-  log_group_name=$2
-  log_group_filter=$3
-
-  echo "Validating cloudwatch lambda subscription for stack name: $stack_name, log group name: $log_group_name, and log group filter: $log_group_filter"
-
-  lambda_function_arn=$(get_lambda_function_arn "$stack_name")
-
-  subscriptions=$(aws logs describe-subscription-filters --log-group-name "$log_group_name" --query 'subscriptionFilters[*].[destinationArn, filterPattern]' --output text)
-
-  if echo "$subscriptions" | grep -q "$lambda_function_arn" && echo "$subscriptions" | grep -q "$log_group_filter"; then
-    echo "Lambda function $lambda_function_arn is subscribed to log group: $log_group_name with filter: $log_group_filter"
-  else
-    exit_with_error "Lambda function $lambda_function_arn is not subscribed to log group: $log_group_name"
-  fi
-
 }
 
 test_logs_cloudwatch() {
