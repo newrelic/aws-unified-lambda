@@ -88,13 +88,10 @@ create_cloudwatch_log_event() {
     aws logs create-log-stream --log-group-name "$log_group_name" --log-stream-name "$log_stream_name"
   fi
 
-  # log events require timestamp as mandatory parameter
-  timestamp=$(($(date +%s%3N)))
-
   aws logs put-log-events \
     --log-group-name "$log_group_name" \
     --log-stream-name "$log_stream_name" \
-    --log-events timestamp=$timestamp,message="$log_message"
+    --log-events "timestamp=$(date +%s000),message=\"$log_message\""
 
   echo "Log event with message: $log_message created successfully."
 }
@@ -169,8 +166,9 @@ fetch_new_relic_logs_api() {
 }
 
 create_log_message() {
-  filter_pattern=$1
+  log_message=$1
+  filter_pattern=$2
 
   UUID=$(uuidgen)
-  echo "RequestId: $UUID hello world with filter pattern: $filter_pattern"
+  echo "RequestId: $UUID, message: $log_message, filter: $filter_pattern"
 }

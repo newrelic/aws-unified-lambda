@@ -54,8 +54,8 @@ validate_lambda_subscription_created() {
 }
 
 test_logs_cloudwatch() {
-  cat <<EOF > cloudwatch-parameter.json
-  '[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+cat <<EOF > cloudwatch-parameter.json
+'[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   echo "Testing for log group configuration JSON: $(<cloudwatch-parameter.json)"
@@ -66,6 +66,16 @@ EOF
   validate_stack_deployment_status "$CLOUDWATCH_TRIGGER_CASE"
   validate_lambda_subscription_created "$CLOUDWATCH_TRIGGER_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
   create_cloudwatch_log_event "$LOG_GROUP_NAME" "$LOG_STREAM_NAME" "$log_message"
-  validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_CLOUDWATCH" "$LOG_STREAM_NAME" "$LOG_MESSAGE_CLOUDWATCH"
+  validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_CLOUDWATCH" "$LOG_STREAM_NAME" "$log_message"
   delete_stack "$CLOUDWATCH_TRIGGER_CASE"
 }
+
+case $1 in
+  test_logs_cloudwatch)
+    test_logs_cloudwatch
+    ;;
+  *)
+  echo "Invalid test case specified."
+  exit 1
+  ;;
+esac
