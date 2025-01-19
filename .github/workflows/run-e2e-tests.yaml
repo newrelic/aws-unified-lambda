@@ -40,8 +40,9 @@ jobs:
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
           S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
-          cd e2e-tests/
-          ./common-scripts/build-templates.sh
+          cd e2e-tests/common-scripts
+          ./build-templates.sh
+          cd ..
           ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
 
   run-e2e-tests-s3:
@@ -77,8 +78,9 @@ jobs:
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
           S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
-          cd e2e-tests/
-          ./common-scripts/build-templates.sh
+          cd e2e-tests/common-scripts
+          ./build-templates.sh
+          cd ..
           ./lambda-s3-trigger.sh ${{ matrix.test-case }}
 
   clean-up:
