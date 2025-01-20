@@ -62,12 +62,10 @@ create_log_message() {
 
 validate_logs_meta_data (){
   response=$1
-  attribute_key=$2
-  attribute_value=$3
 
   # Validate common attributes
-  if ! echo "$response" | grep -q "\"$attribute_key\":\"$attribute_value\""; then
-    exit_with_error "Common attribute $attribute_key with value $attribute_value not found in New Relic logs."
+  if ! echo "$response" | grep -q "\"$COMMON_ATTRIBUTE_KEY\":\"$COMMON_ATTRIBUTE_VALUE\""; then
+    exit_with_error "Common attribute $COMMON_ATTRIBUTE_KEY with value $COMMON_ATTRIBUTE_VALUE not found in New Relic logs."
   fi
   log "Common attributes validated successfully."
 
