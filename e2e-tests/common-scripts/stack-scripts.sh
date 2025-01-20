@@ -2,6 +2,58 @@
 
 source config-file.cfg
 
+deploy_cloudwatch_trigger_stack() {
+  template_file=$1
+  stack_name=$2
+  license_key=$3
+  new_relic_region=$4
+  new_relic_account_id=$5
+  secret_license_key=$6
+  log_group_config=$7
+  common_attributes=$8
+
+  echo "Deploying cloudwatch trigger stack with name: $stack_name"
+
+  sam deploy \
+    --template-file "$template_file" \
+    --stack-name "$stack_name" \
+    --parameter-overrides \
+      LicenseKey="$license_key" \
+      NewRelicRegion="$new_relic_region" \
+      NewRelicAccountId="$new_relic_account_id" \
+      StoreNRLicenseKeyInSecretManager="$secret_license_key" \
+      S3BucketNames="''" \
+      LogGroupConfig="$log_group_config" \
+      CommonAttributes="$common_attributes" \
+    --capabilities CAPABILITY_IAM
+}
+
+deploy_s3_trigger_stack() {
+  template_file=$1
+  stack_name=$2
+  license_key=$3
+  new_relic_region=$4
+  new_relic_account_id=$5
+  secret_license_key=$6
+  s3_bucket_names=$7
+  common_attributes=$8
+
+  echo "Deploying s3 trigger stack with name: $stack_name"
+
+  sam deploy \
+    --template-file "$template_file" \
+    --stack-name "$stack_name" \
+    --parameter-overrides \
+      LicenseKey="$license_key" \
+      NewRelicRegion="$new_relic_region" \
+      NewRelicAccountId="$new_relic_account_id" \
+      StoreNRLicenseKeyInSecretManager="$secret_license_key" \
+      S3BucketNames="$s3_bucket_names" \
+      LogGroupConfig="''" \
+      CommonAttributes="$common_attributes" \
+    --capabilities CAPABILITY_IAM
+}
+
 validate_stack_deployment_status() {
   stack_name=$1
 

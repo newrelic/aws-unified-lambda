@@ -20,6 +20,7 @@ validate_logs_in_new_relic() {
 
     if echo "$response" | grep -q "$log_message"; then
       echo "Log event successfully found in New Relic."
+      validate_logs_meta_data "$response"
       return 0
     fi
 
@@ -57,4 +58,18 @@ create_log_message() {
 
   UUID=$(uuidgen)
   echo "RequestId: $UUID, message: $log_message, filter: $filter_pattern"
+}
+
+validate_logs_meta_data (){
+  response=$1
+  attribute_key=$2
+  attribute_value=$3
+
+  # Validate common attributes
+  if ! echo "$response" | grep -q "\"$attribute_key\":\"$attribute_value\""; then
+    exit_with_error "Common attribute $attribute_key with value $attribute_value not found in New Relic logs."
+  fi
+  log "Common attributes validated successfully."
+
+  # toDo: add entity synthesis validation post confirmation on this
 }
