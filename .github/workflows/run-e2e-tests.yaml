@@ -14,7 +14,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        test-case: [test_logs_cloudwatch]
+        test-case: [test_logs_for_filter_pattern, test_logs_for_secret_manager, test_logs_for_invalid_log_group]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        test-case: [test_logs_s3]
+        test-case: [test_logs_for_prefix, test_logs_for_secret_manager, test_logs_for_invalid_bucket_name]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

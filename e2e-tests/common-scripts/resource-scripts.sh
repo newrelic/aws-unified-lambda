@@ -84,6 +84,25 @@ validate_lambda_subscription_created() {
 
 }
 
+validate_lambda_subscription_not_created() {
+  stack_name=$1
+  log_group_name=$2
+  log_group_filter=$3
+
+  echo "Validating cloudwatch lambda subscription for stack name: $stack_name, log group name: $log_group_name, and log group filter: $log_group_filter"
+
+  lambda_function_arn=$(get_lambda_function_arn "$stack_name")
+
+  event_source_mappings=$(aws lambda list-event-source-mappings --function-name lambda_function_arn --query "EventSourceMappings" --output text)
+
+  # Check if the output is empty
+  if [ -z "$event_source_mappings" ]; then
+      echo "No event source mappings found for the Lambda function $lambda_function_arn. Validation successful"
+  else
+      exit_with_error "Event source mappings exist for the Lambda function '$lambda_function_arn'. Validation failed"
+  fi
+}
+
 validate_lambda_s3_trigger_created() {
   stack_name=$1
   bucket_name=$2
@@ -104,6 +123,25 @@ validate_lambda_s3_trigger_created() {
       echo "S3 triggers with prefix '$bucket_prefix' found for Lambda function $lambda_function_arn on bucket $bucket_name:"
       echo "$lambda_configurations" | jq '.'
   else
-      exit_with_error "No S3 triggers with prefix '$bucket_prefix' found for Lambda function $lambda_function_arn on bucket $bucket_name."
+      exit_with_error "No S3 triggers with prefix '$bucket_prefix' found for Lambda function $lambda_function_arn on bucket: $bucket_name."
+  fi
+}
+
+validate_lambda_s3_trigger_not_created() {
+  stack_name=$1
+  bucket_name=$2
+  bucket_prefix=$3
+
+  echo "Validating s3 lambda trigger event for stack name: $stack_name, bucket name: $bucket_name, and prefix: $bucket_prefix"
+
+  lambda_function_arn=$(get_lambda_function_arn "$stack_name")
+
+  event_source_mappings=$(aws lambda list-event-source-mappings --function-name lambda_function_arn --query "EventSourceMappings" --output text)
+
+  # Check if the output is empty
+  if [ -z "$event_source_mappings" ]; then
+      echo "No event source mappings found for the Lambda function $lambda_function_arn. Validation successful"
+  else
+      exit_with_error "Event source mappings exist for the Lambda function '$lambda_function_arn'. Validation failed"
   fi
 }

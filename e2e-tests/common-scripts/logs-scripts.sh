@@ -34,6 +34,33 @@ validate_logs_in_new_relic() {
   exit_with_error "Log event with $attribute_key: $attribute_value not found in New Relic. Error Received: $response"
 }
 
+validate_logs_not_present() {
+  user_key=$1
+  account_id=$2
+  attribute_key=$3
+  attribute_value=$4
+  log_message=$5
+
+  max_retries=3
+  sleep_time=30
+  attempt=1
+
+  while [[ $attempt -lt $max_retries ]]; do
+    echo "Fetching logs from new relic for $attribute_key: $attribute_value"
+    sleep "$sleep_time"
+    response=$(fetch_new_relic_logs_api "$user_key" "$account_id" "$attribute_key" "$attribute_value")
+
+    if echo "$response" | grep -q "$log_message"; then
+      exit_with_error "Log event found in New Relic. Validation failed"
+    fi
+
+    echo "Log event not found in New Relic. Retrying in $sleep_time seconds..."
+    attempt=$((attempt + 1))
+  done
+
+  echo "Log event with $attribute_key: $attribute_value not found in New Relic. Validation succeeded"
+}
+
 fetch_new_relic_logs_api() {
   user_key=$1
   account_id=$2
@@ -67,7 +94,7 @@ validate_logs_meta_data (){
   if ! echo "$response" | grep -q "\"$COMMON_ATTRIBUTE_KEY\":\"$COMMON_ATTRIBUTE_VALUE\""; then
     exit_with_error "Common attribute $COMMON_ATTRIBUTE_KEY with value $COMMON_ATTRIBUTE_VALUE not found in New Relic logs."
   fi
-  log "Common attributes validated successfully."
+  echo "Common attributes validated successfully."
 
   # toDo: add entity synthesis validation post confirmation on this
 }
