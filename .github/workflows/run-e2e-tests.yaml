@@ -9,7 +9,7 @@ on:
       branch:
         description: 'Branch to run tests against'
         required: false
-        default: develop
+        default: 'develop'
 
 jobs:
   run-e2e-tests-cloudwatch:
