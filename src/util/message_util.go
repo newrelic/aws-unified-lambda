@@ -113,6 +113,7 @@ func AddRequestID(message string, logAttribute common.LogAttributes, lastRequest
 	} else {
 		// Message is in text format
 		matches := regularExpression.FindStringSubmatch(message)
+		// if message has valid regular expression then matches will have 2 elements, first element is the whole string and second element is the requestId
 		if len(matches) == 2 {
 			lastRequestID = matches[1]
 			logAttribute["requestId"] = lastRequestID

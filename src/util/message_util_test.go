@@ -223,6 +223,18 @@ func TestAddRequestId(t *testing.T) {
 		expectedAttrib common.LogAttributes
 	}{
 		{
+			name: "Case where RequestId is already present",
+			messages: []string{
+				"second message",
+			},
+			logAttribute:  common.LogAttributes{},
+			lastRequestID: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			expectedReqID: "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			expectedAttrib: common.LogAttributes{
+				"requestId": "d653fb2c-0234-46ff-ae6b-9a418b888420",
+			},
+		},
+		{
 			name: "Valid RequestId in text message",
 			messages: []string{
 				"RequestId: d653fb2c-0234-46ff-ae6b-9a418b888420 hello world",
@@ -314,6 +326,24 @@ func TestAddRequestId(t *testing.T) {
 			},
 			logAttribute:  common.LogAttributes{},
 			lastRequestID: "",
+			expectedReqID: "4e3e651f-f7a7-46c4-acec-a07ca9876ba6",
+			expectedAttrib: common.LogAttributes{
+				"requestId": "4e3e651f-f7a7-46c4-acec-a07ca9876ba6",
+			},
+		},
+		{
+			name: "Testing scenario with requestId already present for JSON message",
+			messages: []string{
+				`{
+                    "time": "2025-01-15T02:10:15.287Z",
+                    "type": "platform.start",
+                    "record": {
+                        "version": "$LATEST"
+                    }
+                }`,
+			},
+			logAttribute:  common.LogAttributes{},
+			lastRequestID: "4e3e651f-f7a7-46c4-acec-a07ca9876ba6",
 			expectedReqID: "4e3e651f-f7a7-46c4-acec-a07ca9876ba6",
 			expectedAttrib: common.LogAttributes{
 				"requestId": "4e3e651f-f7a7-46c4-acec-a07ca9876ba6",
