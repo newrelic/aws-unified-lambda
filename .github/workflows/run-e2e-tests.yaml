@@ -3,8 +3,13 @@ name: E2E Test Workflow
 on:
   pull_request:
     branches:
-      - develop
       - main
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run tests against'
+        required: false
+        default: develop
 
 jobs:
   run-e2e-tests-cloudwatch:
