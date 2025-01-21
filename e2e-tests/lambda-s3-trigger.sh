@@ -64,7 +64,7 @@ EOF
   S3_BUCKET_NAMES=$(<s3-parameter.json)
   echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
 
-  deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_SECRET_INVALID_BUCKET" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "true" "$S3_BUCKET_NAMES" "''"
+  deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_SECRET_INVALID_BUCKET" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
   validate_stack_deployment_status "$S3_SECRET_INVALID_BUCKET"
 
   # validate that lambda trigger is not created

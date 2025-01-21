@@ -67,7 +67,7 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   echo "Testing for log group configuration JSON: $(<cloudwatch-parameter.json)"
 
-  deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_INVALID_LOG_GROUP" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "true"  "$LOG_GROUP_NAMES" "''"
+  deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_INVALID_LOG_GROUP" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
   validate_stack_deployment_status "$CLOUDWATCH_INVALID_LOG_GROUP"
 
   # validate that lambda subscription is not created

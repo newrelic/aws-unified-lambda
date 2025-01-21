@@ -95,10 +95,8 @@ delete_stack() {
 
   if [ -z "$stack_status" ]; then
     echo "Stack $stack_name has been successfully deleted."
-  elif [ "$stack_status" == "DELETE_FAILED" ]; then
-    echo "Failed to delete stack $stack_name."
   else
-    echo "Unexpected stack status: $stack_status."
+    exit_with_error "Failed to delete stack $stack_name."
   fi
 }
 
