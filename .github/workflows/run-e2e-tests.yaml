@@ -38,7 +38,6 @@ jobs:
         env:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-          S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
           cd e2e-tests/common-scripts
           ./build-templates.sh
@@ -76,7 +75,6 @@ jobs:
         env:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-          S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
           cd e2e-tests/common-scripts
           ./build-templates.sh
