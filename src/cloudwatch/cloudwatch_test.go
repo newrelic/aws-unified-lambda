@@ -1,13 +1,14 @@
 package cloudwatch
 
 import (
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/newrelic/aws-unified-lambda-logging/common"
 	"github.com/newrelic/aws-unified-lambda-logging/util"
 	"github.com/stretchr/testify/assert"
-	"strings"
-	"testing"
-	"time"
 )
 
 // mockAWSConfiguration returns a mock AWSConfiguration object for testing purposes.
@@ -25,11 +26,14 @@ func mockAWSConfiguration() util.AWSConfiguration {
 func TestGetLogs(t *testing.T) {
 	tests := []struct {
 		name            string                          // Name of the test case
+		logGroup        string                          // Log group name
 		logEvents       []events.CloudwatchLogsLogEvent // Log events to process
 		expectedBatches int                             // Expected number of batches
+		expectedReqID   string                          // Expected request ID
 	}{
 		{
-			name: "Success with single batch",
+			name:     "Success with single batch",
+			logGroup: "test-log-group",
 			logEvents: []events.CloudwatchLogsLogEvent{
 				{Message: "test message 1", Timestamp: time.Now().Unix()},
 				{Message: "test message 2", Timestamp: time.Now().Unix()},
@@ -37,7 +41,8 @@ func TestGetLogs(t *testing.T) {
 			expectedBatches: 1,
 		},
 		{
-			name: "Success with multiple batches",
+			name:     "Success with multiple batches",
+			logGroup: "test-log-group",
 			logEvents: func() []events.CloudwatchLogsLogEvent {
 				var logEvents []events.CloudwatchLogsLogEvent
 				for i := 0; i < common.MaxPayloadMessages+1; i++ {
@@ -52,11 +57,13 @@ func TestGetLogs(t *testing.T) {
 		},
 		{
 			name:            "Empty log data",
+			logGroup:        "test-log-group",
 			logEvents:       []events.CloudwatchLogsLogEvent{},
 			expectedBatches: 0,
 		},
 		{
-			name: "log event with a single message to check if batching works",
+			name:     "log event with a single message to check if batching works",
+			logGroup: "test-log-group",
 			logEvents: func() []events.CloudwatchLogsLogEvent {
 				var logEvents []events.CloudwatchLogsLogEvent
 				logEvents = append(logEvents, events.CloudwatchLogsLogEvent{
@@ -67,12 +74,32 @@ func TestGetLogs(t *testing.T) {
 			}(),
 			expectedBatches: 2,
 		},
+		{
+			name:     "Lambda log group with request ID",
+			logGroup: "/aws/lambda/test-log-group",
+			logEvents: []events.CloudwatchLogsLogEvent{
+				{Message: "RequestId: d653fb2c-0234-46ff-ae6b-9a418b888420 Start of request", Timestamp: time.Now().Unix()},
+				{Message: "Processing request", Timestamp: time.Now().Unix()},
+				{Message: "RequestId: d653fb2c-0234-46ff-ae6b-9a418b888420 End of request", Timestamp: time.Now().Unix()},
+			},
+			expectedBatches: 1,
+			expectedReqID:   "d653fb2c-0234-46ff-ae6b-9a418b888420",
+		},
+		{
+			name:     "Non-Lambda log group",
+			logGroup: "test-log-group",
+			logEvents: []events.CloudwatchLogsLogEvent{
+				{Message: "Some log message", Timestamp: time.Now().Unix()},
+			},
+			expectedBatches: 1,
+			expectedReqID:   "",
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			cloudwatchLogsData := events.CloudwatchLogsData{
-				LogGroup:  "test-log-group",
+				LogGroup:  tc.logGroup,
 				LogStream: "test-log-stream",
 				LogEvents: tc.logEvents,
 			}
@@ -90,6 +117,15 @@ func TestGetLogs(t *testing.T) {
 			}
 
 			assert.Equal(t, tc.expectedBatches, len(batches), "Expected number of batches does not match")
+
+			// Check the last request ID if expected
+			if tc.expectedReqID != "" {
+				for _, batch := range batches {
+					for _, log := range batch {
+						assert.Equal(t, tc.expectedReqID, log.Entries[0].Attributes["requestId"], "RequestId does not match")
+					}
+				}
+			}
 
 			// iterate through batches consumed from the channel
 			for _, batch := range batches {
