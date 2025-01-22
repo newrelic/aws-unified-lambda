@@ -4,12 +4,7 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run tests against'
-        required: false
-        default: 'develop'
+      - develop
 
 jobs:
   run-e2e-tests-cloudwatch:
