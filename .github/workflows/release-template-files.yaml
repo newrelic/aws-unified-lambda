@@ -26,6 +26,23 @@ jobs:
         run: |
           pip install aws-sam-cli
 
+      # modify lambda CodeUri to production as s3 bucket destination
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install ruamel
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruamel.yaml
+
+      - name: Run Python Script to Update lambda-template.yaml
+        run: python workflow-scripts/update_lambda_template.py
+
+      - name: Verify the changes
+        run: cat lambda-template.yaml
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
