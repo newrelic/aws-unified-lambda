@@ -77,8 +77,8 @@ EOF
 }
 
 case $1 in
-  test_logs_for_filter_pattern)
-    test_logs_for_filter_pattern
+  test_logs_with_filter_pattern)
+    test_logs_with_filter_pattern
     ;;
   test_logs_for_secret_manager)
     test_logs_for_secret_manager

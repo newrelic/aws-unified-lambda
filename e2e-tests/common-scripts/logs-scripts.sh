@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source config-file.cfg
+source entity_synthesis_param.cfg
 source stack-scripts.sh
 
 validate_logs_in_new_relic() {
@@ -90,11 +91,21 @@ create_log_message() {
 validate_logs_meta_data (){
   response=$1
 
-  # Validate common attributes
-  if ! echo "$response" | grep -q "\"$COMMON_ATTRIBUTE_KEY\":\"$COMMON_ATTRIBUTE_VALUE\""; then
-    exit_with_error "Common attribute $COMMON_ATTRIBUTE_KEY with value $COMMON_ATTRIBUTE_VALUE not found in New Relic logs."
+  # Validate custom attributes
+  if ! echo "$response" | grep -q "\"$CUSTOM_ATTRIBUTE_KEY\":\"$CUSTOM_ATTRIBUTE_VALUE\""; then
+    exit_with_error "Custom attribute $CUSTOM_ATTRIBUTE_KEY with value $CUSTOM_ATTRIBUTE_VALUE not found in New Relic logs."
   fi
-  echo "Common attributes validated successfully."
+  echo "Custom attributes {attributeKey: $CUSTOM_ATTRIBUTE_KEY, attributeValue: $CUSTOM_ATTRIBUTE_VALUE} validated successfully."
 
-  # toDo: add entity synthesis validation post confirmation on this
+  # Validate common attributes
+  while IFS='=' read -r key value; do
+    if [[ $key == instrumentation_* ]]; then
+      new_key=$(echo "$key" | sed 's/_/./g')
+      if ! echo "$response" | grep -q "\"$new_key\":\"$value\""; then
+        exit_with_error "Entity synthesis attribute $new_key with value $value not found in New Relic logs."
+      fi
+    fi
+  done < entity_synthesis_param.cfg
+
+  echo "Entity synthesis attributes validated successfully."
 }

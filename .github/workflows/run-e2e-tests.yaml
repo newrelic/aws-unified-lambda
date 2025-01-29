@@ -1,10 +1,10 @@
 name: E2E Test Workflow
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
       - develop
+      - main
 
 jobs:
   run-e2e-tests-cloudwatch:
@@ -14,7 +14,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        test-case: [test_logs_for_filter_pattern, test_logs_for_secret_manager, test_logs_for_invalid_log_group]
+        test-case: [test_logs_with_filter_pattern, test_logs_for_secret_manager, test_logs_for_invalid_log_group]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
