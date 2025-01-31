@@ -58,3 +58,12 @@ jobs:
           S3_BUCKET: unified-lambda-e2e-test-templates
         run:
           aws s3 rm "s3://$S3_BUCKET" --recursive
+
+      - name: Send failure notification to Slack
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
