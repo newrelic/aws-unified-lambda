@@ -52,14 +52,37 @@ deploy_s3_trigger_stack() {
     --capabilities CAPABILITY_IAM
 }
 
-deploy_firehose_metric_polling_stack() {
-  polling_integration_slugs=$1
-  s3_bucket_names=$2
-  log_group_config=$3
-  common_attributes=$4
+deploy_lambda_firehose_stack() {
+  s3_bucket_names=$1
+  log_group_config=$2
+  common_attributes=$3
+  enable_cloudwatch_logging_for_firehose=$4
   store_license_key_in_secret_manager=$5
 
-  echo "Deploying New Relic stack with name: $stack_name"
+  aws cloudformation deploy \
+    --template-file "$TEMPLATES_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
+    --stack-name "$LAMBDA_FIREHOSE_CASE" \
+    --parameter-overrides \
+      LicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      S3BucketNames="$s3_bucket_names" \
+      LogGroupConfig="$log_group_config" \
+      CommonAttributes="$common_attributes" \
+      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME" \
+      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+}
+
+deploy_firehose_metric_polling_stack() {
+  s3_bucket_names=$1
+  log_group_config=$2
+  common_attributes=$3
+  store_license_key_in_secret_manager=$4
+
+  echo "Deploying New Relic CloudFormation user key: $NEW_RELIC_USER_KEY"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATES_BUILD_DIR/$FIREHOSE_METRIC_POLLING_TEMPLATE" \
@@ -70,30 +93,19 @@ deploy_firehose_metric_polling_stack() {
       NewRelicRegion="$NEW_RELIC_REGION" \
       IntegrationName="$FIREHOSE_METRIC_POLLING_CASE" \
       NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
-      PollingIntegrationSlugs="$polling_integration_slugs" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       S3BucketNames="$s3_bucket_names" \
       LogGroupConfig="$log_group_config" \
       CommonAttributes="$common_attributes" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
-    --capabilities CAPABILITY_IAM
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
 }
 
 deploy_firehose_metric_streaming_stack() {
-  stack_name=$1
-  iam_role_name=$2
-  new_relic_account_id=$3
-  integration_name=$4
-  new_relic_api_key=$5
-  polling_integration_slugs=$6
-  metric_collection_mode=$7
-  firehose_stream_name=$8
   cloudwatch_metric_stream_name=$9
-  s3_backup_bucket_name=${10}
   create_config_service=${11}
   s3_config_bucket_name=${12}
-  new_relic_license_key=${13}
-  new_relic_region=${14}
   log_group_config=${15}
   logging_firehose_stream_name=${16}
   logging_s3_backup_bucket_name=${17}
@@ -101,72 +113,59 @@ deploy_firehose_metric_streaming_stack() {
   common_attributes=${19}
   store_license_key_in_secret_manager=${20}
 
-  echo "Deploying New Relic integration stack with name: $stack_name"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATES_BUILD_DIR/$FIREHOSE_METRIC_STREAMING_TEMPLATE" \
-    --stack-name "$stack_name" \
+    --stack-name "$FIREHOSE_METRIC_STREAMING_TEMPLATE" \
     --parameter-overrides \
-      IAMRoleName="$iam_role_name" \
-      NewRelicAccountId="$new_relic_account_id" \
-      IntegrationName="$integration_name" \
-      NewRelicAPIKey="$new_relic_api_key" \
-      PollingIntegrationSlugs="$polling_integration_slugs" \
-      MetricCollectionMode="$metric_collection_mode" \
-      FirehoseStreamName="$firehose_stream_name" \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$FIREHOSE_METRIC_STREAMING_TEMPLATE" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      MetricCollectionMode="$METRIC_COLLECTION_MODE" \
+      FirehoseStreamName="$FIREHOSE_STREAM_NAME" \
       CloudWatchMetricStreamName="$cloudwatch_metric_stream_name" \
-      S3BackupBucketName="$s3_backup_bucket_name" \
+      S3BackupBucketName="$BACKUP_BUCKET_NAME" \
       CreateConfigService="$create_config_service" \
       S3ConfigBucketName="$s3_config_bucket_name" \
-      NewRelicLicenseKey="$new_relic_license_key" \
-      NewRelicRegion="$new_relic_region" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
       LoggingFirehoseStreamName="$logging_firehose_stream_name" \
       LoggingS3BackupBucketName="$logging_s3_backup_bucket_name" \
       EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
       CommonAttributes="$common_attributes" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
-    --capabilities CAPABILITY_IAM
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
 }
 
 deploy_lambda_firehose_metric_polling_stack() {
-  stack_name=$1
-  iam_role_name=$2
-  new_relic_account_id=$3
-  new_relic_region=$4
-  integration_name=$5
-  new_relic_api_key=$6
-  polling_integration_slugs=$7
-  new_relic_license_key=$8
-  s3_bucket_names=$9
-  log_group_config=${10}
-  common_attributes=${11}
-  logging_firehose_stream_name=${12}
-  logging_s3_backup_bucket_name=${13}
-  enable_cloudwatch_logging_for_firehose=${14}
-  store_license_key_in_secret_manager=${15}
-
-  echo "Deploying New Relic CloudFormation stack with name: $stack_name"
+  s3_bucket_names=$1
+  log_group_config=$2
+  common_attributes=$3
+  enable_cloudwatch_logging_for_firehose=$4
+  store_license_key_in_secret_manager=$5
 
   aws cloudformation deploy \
     --template-file "$TEMPLATES_BUILD_DIR/$LAMBDA_FIREHOSE_METRIC_POLLING_TEMPLATE" \
-    --stack-name "$stack_name" \
+    --stack-name "$LAMBDA_FIREHOSE_METRIC_POLLING_CASE" \
     --parameter-overrides \
-      IAMRoleName="$iam_role_name" \
-      NewRelicAccountId="$new_relic_account_id" \
-      NewRelicRegion="$new_relic_region" \
-      IntegrationName="$integration_name" \
-      NewRelicAPIKey="$new_relic_api_key" \
-      PollingIntegrationSlugs="$polling_integration_slugs" \
-      NewRelicLicenseKey="$new_relic_license_key" \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$LAMBDA_FIREHOSE_METRIC_POLLING_TEMPLATE" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       S3BucketNames="$s3_bucket_names" \
       LogGroupConfig="$log_group_config" \
       CommonAttributes="$common_attributes" \
-      LoggingFirehoseStreamName="$logging_firehose_stream_name" \
-      LoggingS3BackupBucketName="$logging_s3_backup_bucket_name" \
+      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME" \
+      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
-    --capabilities CAPABILITY_IAM
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
 }
 
 deploy_lambda_firehose_metric_streaming_stack() {
@@ -216,32 +215,6 @@ deploy_lambda_firehose_metric_streaming_stack() {
       CommonAttributes="$common_attributes" \
       LoggingFirehoseStreamName="$logging_firehose_stream_name" \
       LoggingS3BackupBucketName="$logging_s3_backup_bucket_name" \
-      EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
-      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
-    --capabilities CAPABILITY_IAM
-}
-
-deploy_lambda_firehose_stack() {
-  s3_bucket_names=$1
-  log_group_config=$2
-  common_attributes=$3
-  enable_cloudwatch_logging_for_firehose=$4
-  store_license_key_in_secret_manager=$5
-
-  echo "Deploying New Relic Logging stack with name: $stack_name"
-
-  aws cloudformation deploy \
-    --template-file "$TEMPLATES_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
-    --stack-name "$LAMBDA_FIREHOSE_CASE" \
-    --parameter-overrides \
-      LicenseKey="$NEW_RELIC_LICENSE_KEY" \
-      NewRelicRegion="$NEW_RELIC_REGION" \
-      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
-      S3BucketNames="$s3_bucket_names" \
-      LogGroupConfig="$log_group_config" \
-      CommonAttributes="$common_attributes" \
-      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME" \
-      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
     --capabilities CAPABILITY_IAM
