@@ -20,7 +20,7 @@ COMMON_ATTRIBUTES=$(<common_attribute.json)
 
   log_message=$(create_log_message "$LOG_MESSAGE_S3" "")
 
-  deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_PREFIX_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "$COMMON_ATTRIBUTES"
+  deploy_s3_trigger_stack "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_PREFIX_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "$COMMON_ATTRIBUTES"
   validate_stack_deployment_status "$S3_PREFIX_CASE"
   validate_lambda_s3_trigger_created "$S3_PREFIX_CASE" "$S3_BUCKET_NAME" "$S3_BUCKET_PREFIX"
 
@@ -48,7 +48,7 @@ COMMON_ATTRIBUTES=$(<common_attribute.json)
 
   log_message=$(create_log_message "$LOG_MESSAGE_S3" "")
 
-  deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_SECRET_MANAGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "true" "$S3_BUCKET_NAMES" "$COMMON_ATTRIBUTES"
+  deploy_s3_trigger_stack "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_SECRET_MANAGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "true" "$S3_BUCKET_NAMES" "$COMMON_ATTRIBUTES"
   validate_stack_deployment_status "$S3_SECRET_MANAGER_CASE"
   validate_lambda_s3_trigger_created "$S3_SECRET_MANAGER_CASE" "$S3_BUCKET_NAME_SECRET_MANAGER" "$S3_BUCKET_PREFIX"
   upload_file_to_s3_bucket "$S3_BUCKET_NAME_SECRET_MANAGER" "$S3_BUCKET_OBJECT_NAME" "$S3_BUCKET_PREFIX" "$log_message"
@@ -64,7 +64,7 @@ EOF
   S3_BUCKET_NAMES=$(<s3-parameter.json)
   echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
 
-  deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_INVALID_BUCKET_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
+  deploy_s3_trigger_stack "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_INVALID_BUCKET_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
   validate_stack_deployment_status "$S3_INVALID_BUCKET_CASE"
 
   # validate that lambda trigger is not created

@@ -21,7 +21,7 @@ COMMON_ATTRIBUTES=$(<common_attribute.json)
   log_message_with_filter_pattern=$(create_log_message "$LOG_MESSAGE_CLOUDWATCH" "$LOG_GROUP_FILTER_PATTERN")
   log_message_without_filter_pattern=$(create_log_message "$LOG_MESSAGE_CLOUDWATCH" "")
 
-  deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_FILTER_PATTERN_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES"
+  deploy_cloudwatch_trigger_stack "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_FILTER_PATTERN_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES"
   validate_stack_deployment_status "$CLOUDWATCH_FILTER_PATTERN_CASE"
   validate_lambda_subscription_created "$CLOUDWATCH_FILTER_PATTERN_CASE" "$LOG_GROUP_NAME" "$LOG_GROUP_FILTER_PATTERN"
 
@@ -51,7 +51,7 @@ COMMON_ATTRIBUTES=$(<common_attribute.json)
 
   log_message=$(create_log_message "$LOG_MESSAGE_CLOUDWATCH" "$LOG_GROUP_FILTER_PATTERN")
 
-  deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_SECRET_MANAGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "true"  "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES"
+  deploy_cloudwatch_trigger_stack "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_SECRET_MANAGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "true"  "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES"
   validate_stack_deployment_status "$CLOUDWATCH_SECRET_MANAGER_CASE"
   validate_lambda_subscription_created "$CLOUDWATCH_SECRET_MANAGER_CASE" "$LOG_GROUP_NAME_SECRET_MANAGER" "$LOG_GROUP_FILTER_PATTERN"
   create_cloudwatch_log_event "$LOG_GROUP_NAME_SECRET_MANAGER" "$LOG_STREAM_NAME" "$log_message"
@@ -67,7 +67,7 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   echo "Testing for log group configuration JSON: $(<cloudwatch-parameter.json)"
 
-  deploy_cloudwatch_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_INVALID_LOG_GROUP_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
+  deploy_cloudwatch_trigger_stack "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" "$CLOUDWATCH_INVALID_LOG_GROUP_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false"  "$LOG_GROUP_NAMES" "''"
   validate_stack_deployment_status "$CLOUDWATCH_INVALID_LOG_GROUP_CASE"
 
   # validate that lambda subscription is not created
