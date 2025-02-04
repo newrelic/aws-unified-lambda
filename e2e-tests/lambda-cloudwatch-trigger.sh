@@ -5,7 +5,7 @@ source common-scripts/resource-scripts.sh
 source common-scripts/logs-scripts.sh
 source common-scripts/config-file.cfg
 
-test_logs_for_filter_pattern() {
+test_logs_with_filter_pattern() {
 cat <<EOF > cloudwatch-parameter.json
 '[{"LogGroupName":"$LOG_GROUP_NAME","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
