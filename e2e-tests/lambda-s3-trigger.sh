@@ -52,7 +52,7 @@ COMMON_ATTRIBUTES=$(<common_attribute.json)
   validate_stack_deployment_status "$S3_SECRET_MANAGER_CASE"
   validate_lambda_s3_trigger_created "$S3_SECRET_MANAGER_CASE" "$S3_BUCKET_NAME_SECRET_MANAGER" "$S3_BUCKET_PREFIX"
   upload_file_to_s3_bucket "$S3_BUCKET_NAME_SECRET_MANAGER" "$S3_BUCKET_OBJECT_NAME" "$S3_BUCKET_PREFIX" "$log_message"
-  validate_logs_in_new_relic "$ATTRIBUTE_KEY_S3" "$S3_BUCKET_PREFIX" "$log_message"
+  validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_S3" "$S3_BUCKET_PREFIX" "$log_message"
   delete_stack "$S3_SECRET_MANAGER_CASE"
 }
 
