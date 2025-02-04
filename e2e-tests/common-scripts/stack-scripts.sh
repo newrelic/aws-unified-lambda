@@ -11,7 +11,7 @@ deploy_cloudwatch_trigger_stack() {
   echo "Deploying cloudwatch trigger stack with name: $stack_name"
 
   sam deploy \
-    --template-file "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
     --stack-name "$stack_name" \
     --parameter-overrides \
       LicenseKey="$NEW_RELIC_LICENSE_KEY" \
@@ -33,7 +33,7 @@ deploy_s3_trigger_stack() {
   echo "Deploying s3 trigger stack with name: $stack_name"
 
   sam deploy \
-    --template-file "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
     --stack-name "$stack_name" \
     --parameter-overrides \
       LicenseKey="$NEW_RELIC_LICENSE_KEY" \
