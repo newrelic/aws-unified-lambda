@@ -62,7 +62,7 @@ upload_file_to_s3_bucket() {
       return 1
   fi
 
-  echo "Log successfully uploaded to s3://$bucket_name/$prefix"
+  echo "Log successfully uploaded as s3://$bucket_name/$prefix"
 }
 
 validate_lambda_subscription_created() {
