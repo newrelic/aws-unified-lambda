@@ -1,7 +1,7 @@
 name: E2E Test Workflow
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
       - main
