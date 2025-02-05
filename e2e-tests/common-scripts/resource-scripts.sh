@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source config-file.cfg
+source test-configs.cfg
 source stack-scripts.sh
 
 get_lambda_function_arn() {

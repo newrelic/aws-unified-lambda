@@ -4,7 +4,7 @@
 # make packaging and publishing of templates more efficient so every time new al2 env is not spun up
 TEMPLATES=("lambda-template.yaml")
 
-source config-file.cfg
+source test-configs.cfg
 
 for TEMPLATE_FILE in "${TEMPLATES[@]}"; do
 

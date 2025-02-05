@@ -3,7 +3,7 @@
 source common-scripts/stack-scripts.sh
 source common-scripts/resource-scripts.sh
 source common-scripts/logs-scripts.sh
-source common-scripts/config-file.cfg
+source test-configs.cfg
 
 test_logs_for_prefix() {
 cat <<EOF > s3-parameter.json

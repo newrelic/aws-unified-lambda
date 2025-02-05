@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source config-file.cfg
+source test-configs.cfg
 
 deploy_cloudwatch_trigger_stack() {
   stack_name=$1
