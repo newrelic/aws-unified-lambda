@@ -41,7 +41,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          path: .aws-sam/build/
+          path: build-artifact
 
       - name: Run e2e tests
         run: |
