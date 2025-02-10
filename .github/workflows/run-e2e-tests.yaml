@@ -44,7 +44,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build/${{ matrix.TEMPLATE_FILE }}.yaml
+          name: ${{ matrix.TEMPLATE_FILE }}.yaml
           path: .aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml
 
   run-e2e-tests-lambda-firehose-metrics:
