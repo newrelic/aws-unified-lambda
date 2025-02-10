@@ -7,6 +7,46 @@ on:
       - main
 
 jobs:
+  build-logging-lambda-firehose-template:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    strategy:
+      matrix:
+        TEMPLATE_FILE: [logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream, lambda-template]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
+          aws-region: us-east-1
+
+      - name: Build SAM Application
+        env:
+          S3_BUCKET: unified-lambda-e2e-test-templates
+        run: |
+          sam build -u --template-file "../../${{ matrix.test-case }}.yaml" --build-dir ".aws-sam/build/${{ matrix.test-case }}"
+          sam package --s3-bucket "$S3_BUCKET" --template-file ".aws-sam/build/${{ matrix.test-case }}/template.yaml" --output-template-file ".aws-sam/build/${{ matrix.test-case }}/${{ matrix.test-case }}.yaml"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build/${{ matrix.test-case }}.yaml
+          path: .aws-sam/build/${{ matrix.test-case }}/${{ matrix.test-case }}.yaml
+
   run-e2e-tests-lambda-firehose-metrics:
     runs-on: ubuntu-latest
     permissions:
@@ -16,6 +56,11 @@ jobs:
       matrix:
         test-case: [test_for_lambda_firehose_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack]
     steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          path: .aws-sam/build/
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -39,9 +84,6 @@ jobs:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
-          cd e2e-tests/common-scripts
-          ./build-templates.sh
-          cd ..
           ./lambda-with-metrics-test.sh ${{ matrix.test-case }}
 
   clean-up:

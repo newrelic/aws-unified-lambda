@@ -53,7 +53,7 @@ deploy_lambda_firehose_stack() {
   enable_cloudwatch_logging_for_firehose=$4
   store_license_key_in_secret_manager=$5
 
-  echo "Deploying cloudwatch trigger stack with name: $stack_name"
+  echo "Deploying lambda-firehose stack with name: $stack_name"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
@@ -78,7 +78,7 @@ deploy_lambda_metric_polling_stack() {
   store_license_key_in_secret_manager=$3
   s3_bucket_names=$4
 
-  echo "Deploying cloudwatch trigger stack with name: $LAMBDA_METRIC_POLLING_CASE"
+  echo "Deploying lambda metric polling stack with name: $LAMBDA_METRIC_POLLING_CASE"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_METRIC_POLLING_TEMPLATE" \
@@ -104,7 +104,7 @@ deploy_lambda_metric_streaming_stack() {
   store_license_key_in_secret_manager=$3
   s3_bucket_names=$4
 
-  echo "Deploying cloudwatch trigger stack with name: $LAMBDA_METRIC_STREAMING_CASE"
+  echo "Deploying lambda metric streaming stack with name: $LAMBDA_METRIC_STREAMING_CASE"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_METRIC_STREAMING_TEMPLATE" \
