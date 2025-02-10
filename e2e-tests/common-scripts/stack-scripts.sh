@@ -53,7 +53,7 @@ deploy_lambda_firehose_stack() {
   enable_cloudwatch_logging_for_firehose=$4
   store_license_key_in_secret_manager=$5
 
-  echo "Deploying lambda-firehose stack with name: $LAMBDA_FIREHOSE_TEMPLATE_CASE"
+  echo "Deploying lambda-firehose stack with name: $LAMBDA_FIREHOSE_CASE"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
@@ -149,7 +149,7 @@ deploy_firehose_metric_polling_stack() {
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
-      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME" \
+      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME_FIREHOSE_METRIC_POLLING_CASE" \
       LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
