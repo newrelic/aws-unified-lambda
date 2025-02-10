@@ -70,20 +70,12 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
       - name: Run e2e tests
         env:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
+          ls build-artifact
           cd e2e-tests/
+          ls ../build-artifact
           ./lambda-with-metrics-test.sh ${{ matrix.test-case }}
