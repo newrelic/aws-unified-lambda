@@ -55,7 +55,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        test-case: [test_for_lambda_firehose_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack]
+        test-case: [test_for_firehose_metric_polling_stack]
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -64,4 +64,30 @@ jobs:
 
       - name: Check downloads
         run: |
-          ls -l .aws-sam/build
+          ls .aws-sam/build
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
+          aws-region: us-east-1
+
+      - name: Run e2e tests
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+        run: |
+          cd e2e-tests/
+          ./lambda-with-metrics-test.sh ${{ matrix.test-case }}

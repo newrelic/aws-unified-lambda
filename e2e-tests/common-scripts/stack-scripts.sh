@@ -130,6 +130,33 @@ deploy_lambda_metric_streaming_stack() {
     --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
 }
 
+deploy_firehose_metric_polling_stack() {
+  log_group_config=$1
+  common_attributes=$2
+  store_license_key_in_secret_manager=$3
+
+  echo "Deploying cloudwatch trigger stack with name: $FIREHOSE_METRIC_POLLING_CASE"
+
+  aws cloudformation deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$FIREHOSE_METRIC_POLLING_TEMPLATE" \
+    --stack-name "$FIREHOSE_METRIC_POLLING_CASE" \
+    --parameter-overrides \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$FIREHOSE_METRIC_POLLING_CASE" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      LogGroupConfig="$log_group_config" \
+      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME" \
+      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      EnableCloudWatchLoggingForFirehose="false" \
+      CommonAttributes="$common_attributes" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+}
+
 validate_stack_deployment_status() {
   stack_name=$1
 
