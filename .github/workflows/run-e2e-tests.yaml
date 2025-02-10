@@ -1,20 +1,20 @@
 name: E2E Test Workflow
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
       - main
 
 jobs:
-  run-e2e-tests-cloudwatch:
+  run-e2e-tests-lambda-firehose-metrics:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
     strategy:
       matrix:
-        test-case: [test_logs_with_filter_pattern, test_logs_for_secret_manager, test_logs_for_invalid_log_group]
+        test-case: [test_for_lambda_firehose_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,47 +42,11 @@ jobs:
           cd e2e-tests/common-scripts
           ./build-templates.sh
           cd ..
-          ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
-
-  run-e2e-tests-s3:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    strategy:
-      matrix:
-        test-case: [test_logs_for_prefix, test_logs_for_secret_manager, test_logs_for_invalid_bucket_name]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
-      - name: Run e2e tests
-        env:
-          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
-          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-        run: |
-          cd e2e-tests/common-scripts
-          ./build-templates.sh
-          cd ..
-          ./lambda-s3-trigger.sh ${{ matrix.test-case }}
+          ./lambda-with-metrics-test.sh ${{ matrix.test-case }}
 
   clean-up:
-    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3]
+    #    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3]
+    needs: [run-e2e-tests-lambda-firehose-metrics]
     runs-on: ubuntu-latest
     permissions:
       id-token: write

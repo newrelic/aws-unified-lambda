@@ -2,7 +2,9 @@
 
 # add all templates for subsequent test cases
 # make packaging and publishing of templates more efficient so every time new al2 env is not spun up
-TEMPLATES=("lambda-template.yaml")
+TEMPLATES=(
+  "logging-lambda-metric-stream.yaml"
+)
 
 source config-file.cfg
 

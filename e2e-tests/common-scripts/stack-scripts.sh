@@ -11,7 +11,7 @@ deploy_cloudwatch_trigger_stack() {
   echo "Deploying cloudwatch trigger stack with name: $stack_name"
 
   sam deploy \
-    --template-file "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
     --stack-name "$stack_name" \
     --parameter-overrides \
       LicenseKey="$NEW_RELIC_LICENSE_KEY" \
@@ -33,7 +33,7 @@ deploy_s3_trigger_stack() {
   echo "Deploying s3 trigger stack with name: $stack_name"
 
   sam deploy \
-    --template-file "$TEMPLATES_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
     --stack-name "$stack_name" \
     --parameter-overrides \
       LicenseKey="$NEW_RELIC_LICENSE_KEY" \
@@ -44,6 +44,90 @@ deploy_s3_trigger_stack() {
       LogGroupConfig="''" \
       CommonAttributes="$common_attributes" \
     --capabilities CAPABILITY_IAM
+}
+
+deploy_lambda_firehose_stack() {
+  s3_bucket_names=$1
+  log_group_config=$2
+  common_attributes=$3
+  enable_cloudwatch_logging_for_firehose=$4
+  store_license_key_in_secret_manager=$5
+
+  echo "Deploying cloudwatch trigger stack with name: $stack_name"
+
+  aws cloudformation deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
+    --stack-name "$LAMBDA_FIREHOSE_CASE" \
+    --parameter-overrides \
+      LicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      S3BucketNames="$s3_bucket_names" \
+      LogGroupConfig="$log_group_config" \
+      CommonAttributes="$common_attributes" \
+      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME_LAMBDA_FIREHOSE_CASE" \
+      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+}
+
+deploy_lambda_metric_polling_stack() {
+  log_group_config=$1
+  common_attributes=$2
+  store_license_key_in_secret_manager=$3
+  s3_bucket_names=$4
+
+  echo "Deploying cloudwatch trigger stack with name: $LAMBDA_METRIC_POLLING_CASE"
+
+  aws cloudformation deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_METRIC_POLLING_TEMPLATE" \
+    --stack-name "$LAMBDA_METRIC_POLLING_CASE" \
+    --parameter-overrides \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$LAMBDA_METRIC_POLLING_CASE" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      S3BucketNames="$s3_bucket_names" \
+      LogGroupConfig="$log_group_config" \
+      CommonAttributes="$common_attributes" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+}
+
+deploy_lambda_metric_streaming_stack() {
+  log_group_config=$1
+  common_attributes=$2
+  store_license_key_in_secret_manager=$3
+  s3_bucket_names=$4
+
+  echo "Deploying cloudwatch trigger stack with name: $LAMBDA_METRIC_STREAMING_CASE"
+
+  aws cloudformation deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_METRIC_STREAMING_TEMPLATE" \
+    --stack-name "$LAMBDA_METRIC_STREAMING_CASE" \
+    --parameter-overrides \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$LAMBDA_METRIC_STREAMING_CASE" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      MetricCollectionMode="$METRIC_COLLECTION_MODE" \
+      FirehoseStreamName="$METRIC_FIREHOSE_STREAM_NAME_LAMBDA_METRICS_STREAMING_CASE" \
+      CloudWatchMetricStreamName="$CLOUDWATCH_METRIC_STREAM_NAME_LAMBDA_METRICS_STREAMING_CASE" \
+      S3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      CreateConfigService="false" \
+      S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
+      S3BucketNames="$s3_bucket_names" \
+      LogGroupConfig="$log_group_config" \
+      CommonAttributes="$common_attributes" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
 }
 
 validate_stack_deployment_status() {
