@@ -53,7 +53,7 @@ deploy_lambda_firehose_stack() {
   enable_cloudwatch_logging_for_firehose=$4
   store_license_key_in_secret_manager=$5
 
-  echo "Deploying lambda-firehose stack with name: $stack_name"
+  echo "Deploying lambda-firehose stack with name: $LAMBDA_FIREHOSE_TEMPLATE_CASE"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
