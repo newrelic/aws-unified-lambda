@@ -45,5 +45,6 @@ jobs:
 
       - name: Run e2e tests
         run: |
+          ls
           cd e2e-tests/
-          ls ../.aws-sam/build
+          ls
