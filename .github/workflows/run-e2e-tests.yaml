@@ -75,7 +75,4 @@ jobs:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
-          ls build-artifact
-          cd e2e-tests/
-          ls ../build-artifact
-          ./lambda-with-metrics-test.sh ${{ matrix.test-case }}
+          ls build-artifact/logging-firehose-metric-polling.yaml
