@@ -55,7 +55,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        test-case: [deploy_lambda_firehose_stack, deploy_lambda_metric_polling_stack, deploy_lambda_metric_streaming_stack]
+        test-case: [test_for_lambda_firehose_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
