@@ -4,7 +4,7 @@ source common-scripts.sh
 source config-file.cfg
 
 # test case constants
-S3_TRIGGER_CASE=e2e-s3-trigger-stack
+S3_TRIGGER_CASE=e2e-s3-trigger-stack-ddcndcepziztqqomeqaiimjmtcsqaobknhyorodqfdzwwzuwmjmbtyxvrfmzqliunrclqf
 
 deploy_s3_trigger_stack() {
   template_file=$1
