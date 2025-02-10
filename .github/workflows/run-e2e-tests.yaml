@@ -38,14 +38,14 @@ jobs:
         env:
           S3_BUCKET: unified-lambda-e2e-test-templates
         run: |
-          sam build -u --template-file "../../${{ matrix.test-case }}.yaml" --build-dir ".aws-sam/build/${{ matrix.test-case }}"
-          sam package --s3-bucket "$S3_BUCKET" --template-file ".aws-sam/build/${{ matrix.test-case }}/template.yaml" --output-template-file ".aws-sam/build/${{ matrix.test-case }}/${{ matrix.test-case }}.yaml"
+          sam build -u --template-file "${{ matrix.TEMPLATE_FILE }}.yaml" --build-dir ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}"
+          sam package --s3-bucket "$S3_BUCKET" --template-file ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}/template.yaml" --output-template-file ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build/${{ matrix.test-case }}.yaml
-          path: .aws-sam/build/${{ matrix.test-case }}/${{ matrix.test-case }}.yaml
+          name: build/${{ matrix.TEMPLATE_FILE }}.yaml
+          path: .aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml
 
   run-e2e-tests-lambda-firehose-metrics:
     needs: [build-templates]
@@ -58,7 +58,7 @@ jobs:
         test-case: [test_for_lambda_firehose_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack]
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: .aws-sam/build/
 
