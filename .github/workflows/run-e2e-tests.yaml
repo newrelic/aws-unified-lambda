@@ -14,7 +14,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        TEMPLATE_FILE: [logging-firehose-metric-polling]
+        TEMPLATE_FILE: [logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream, lambda-template]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,7 +55,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        test-case: [test_for_firehose_metric_polling_stack]
+        test-case: [deploy_lambda_firehose_stack, deploy_lambda_metric_polling_stack, deploy_lambda_metric_streaming_stack]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
