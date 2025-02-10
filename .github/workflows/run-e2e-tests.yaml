@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  build-logging-lambda-firehose-template:
+  build-templates:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -48,6 +48,7 @@ jobs:
           path: .aws-sam/build/${{ matrix.test-case }}/${{ matrix.test-case }}.yaml
 
   run-e2e-tests-lambda-firehose-metrics:
+    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
