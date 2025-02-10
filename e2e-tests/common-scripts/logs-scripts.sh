@@ -42,11 +42,10 @@ validate_logs_not_present() {
   attribute_value=$4
   log_message=$5
 
-  max_retries=3
-  sleep_time=30
+  sleep_time=$SLEEP_TIME
   attempt=1
 
-  while [[ $attempt -lt $max_retries ]]; do
+  while [[ $attempt -lt $MAX_RETRIES ]]; do
     echo "Fetching logs from new relic for $attribute_key: $attribute_value"
     sleep "$sleep_time"
     response=$(fetch_new_relic_logs_api "$user_key" "$account_id" "$attribute_key" "$attribute_value")
