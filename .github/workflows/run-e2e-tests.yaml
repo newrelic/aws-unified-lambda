@@ -35,13 +35,13 @@ jobs:
       matrix:
         test-case: [test_for_firehose_metric_polling_stack]
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
           path: .aws-sam/build/
-
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Run e2e tests
         run: |
