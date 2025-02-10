@@ -11,7 +11,7 @@ deploy_cloudwatch_trigger_stack() {
   echo "Deploying cloudwatch trigger stack with name: $stack_name"
 
   sam deploy \
-    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --template-file "$LAMBDA_TEMPLATE" \
     --stack-name "$stack_name" \
     --parameter-overrides \
       LicenseKey="$NEW_RELIC_LICENSE_KEY" \
@@ -33,7 +33,7 @@ deploy_s3_trigger_stack() {
   echo "Deploying s3 trigger stack with name: $stack_name"
 
   sam deploy \
-    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --template-file "$LAMBDA_TEMPLATE" \
     --stack-name "$stack_name" \
     --parameter-overrides \
       LicenseKey="$NEW_RELIC_LICENSE_KEY" \
@@ -56,7 +56,7 @@ deploy_lambda_firehose_stack() {
   echo "Deploying lambda-firehose stack with name: $stack_name"
 
   aws cloudformation deploy \
-    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
+    --template-file "$LAMBDA_FIREHOSE_TEMPLATE" \
     --stack-name "$LAMBDA_FIREHOSE_CASE" \
     --parameter-overrides \
       LicenseKey="$NEW_RELIC_LICENSE_KEY" \
@@ -81,7 +81,7 @@ deploy_lambda_metric_polling_stack() {
   echo "Deploying lambda metric polling stack with name: $LAMBDA_METRIC_POLLING_CASE"
 
   aws cloudformation deploy \
-    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_METRIC_POLLING_TEMPLATE" \
+    --template-file "$LAMBDA_METRIC_POLLING_TEMPLATE" \
     --stack-name "$LAMBDA_METRIC_POLLING_CASE" \
     --parameter-overrides \
       IAMRoleName="$IAM_ROLE_NAME" \
@@ -107,7 +107,7 @@ deploy_lambda_metric_streaming_stack() {
   echo "Deploying lambda metric streaming stack with name: $LAMBDA_METRIC_STREAMING_CASE"
 
   aws cloudformation deploy \
-    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_METRIC_STREAMING_TEMPLATE" \
+    --template-file "$LAMBDA_METRIC_STREAMING_TEMPLATE" \
     --stack-name "$LAMBDA_METRIC_STREAMING_CASE" \
     --parameter-overrides \
       IAMRoleName="$IAM_ROLE_NAME" \
