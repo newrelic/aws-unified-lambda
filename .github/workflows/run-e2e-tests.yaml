@@ -14,7 +14,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        TEMPLATE_FILE: [logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream, logging-firehose-metric-polling]
+        TEMPLATE_FILE: [lambda-template, logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -89,8 +89,7 @@ jobs:
           ./lambda-with-metrics-test.sh ${{ matrix.test-case }}
 
   clean-up:
-    #    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3]
-    needs: [ run-e2e-tests-lambda-firehose-metrics ]
+    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3, run-e2e-tests-lambda-firehose-metrics]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
