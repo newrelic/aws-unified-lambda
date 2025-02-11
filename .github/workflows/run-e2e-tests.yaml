@@ -89,6 +89,7 @@ jobs:
           ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
 
   run-e2e-tests-s3:
+    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -99,6 +100,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: build-artifact
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -120,9 +126,7 @@ jobs:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
-          cd e2e-tests/common-scripts
-          ./build-templates.sh
-          cd ..
+          cd e2e-tests
           ./lambda-s3-trigger.sh ${{ matrix.test-case }}
 
   clean-up:
