@@ -65,7 +65,7 @@ deploy_lambda_firehose_stack() {
       S3BucketNames="$s3_bucket_names" \
       LogGroupConfig="$log_group_config" \
       CommonAttributes="$common_attributes" \
-      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME_LAMBDA_FIREHOSE_CASE" \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
       LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
@@ -86,7 +86,7 @@ deploy_lambda_metric_polling_stack() {
     --parameter-overrides \
       IAMRoleName="$IAM_ROLE_NAME" \
       NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
-      IntegrationName="$LAMBDA_METRIC_POLLING_CASE" \
+      IntegrationName="$INTEGRATION_NAME" \
       NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
       PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
@@ -112,14 +112,14 @@ deploy_lambda_metric_streaming_stack() {
     --parameter-overrides \
       IAMRoleName="$IAM_ROLE_NAME" \
       NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
-      IntegrationName="$LAMBDA_METRIC_STREAMING_CASE" \
+      IntegrationName="$INTEGRATION_NAME" \
       NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
       PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       MetricCollectionMode="$METRIC_COLLECTION_MODE" \
-      FirehoseStreamName="$METRIC_FIREHOSE_STREAM_NAME_LAMBDA_METRICS_STREAMING_CASE" \
-      CloudWatchMetricStreamName="$CLOUDWATCH_METRIC_STREAM_NAME_LAMBDA_METRICS_STREAMING_CASE" \
+      FirehoseStreamName="$LOGGING_STREAM_NAME" \
+      CloudWatchMetricStreamName="$METRIC_STREAM_NAME" \
       S3BackupBucketName="$BACKUP_BUCKET_NAME" \
       CreateConfigService="false" \
       S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
@@ -135,7 +135,7 @@ deploy_firehose_metric_polling_stack() {
   common_attributes=$2
   store_license_key_in_secret_manager=$3
 
-  echo "Deploying cloudwatch trigger stack with name: $FIREHOSE_METRIC_POLLING_CASE"
+  echo "Deploying firehose metric polling stack with name: $FIREHOSE_METRIC_POLLING_CASE"
 
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$FIREHOSE_METRIC_POLLING_TEMPLATE" \
@@ -143,18 +143,50 @@ deploy_firehose_metric_polling_stack() {
     --parameter-overrides \
       IAMRoleName="$IAM_ROLE_NAME" \
       NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
-      IntegrationName="$FIREHOSE_METRIC_POLLING_CASE" \
+      IntegrationName="$INTEGRATION_NAME" \
       NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
       PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
-      LoggingFirehoseStreamName="$FIREHOSE_STREAM_NAME_FIREHOSE_METRIC_POLLING_CASE" \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
       LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
-    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
+    --disable-rollback
+}
+
+deploy_lambda_firehose_metric_polling_stack() {
+  log_group_config=$1
+  common_attributes=$2
+  store_license_key_in_secret_manager=$3
+  s3_bucket_names=$4
+
+
+  echo "Deploying lambda firehose metric polling stack with name: $LAMBDA_FIREHOSE_METRIC_POLLING_CASE"
+
+  aws cloudformation deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_METRIC_POLLING_TEMPLATE" \
+    --stack-name "$LAMBDA_FIREHOSE_METRIC_POLLING_CASE" \
+    --parameter-overrides \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$INTEGRATION_NAME" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      LogGroupConfig="$log_group_config" \
+      S3BucketNames="$s3_bucket_names" \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
+      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      EnableCloudWatchLoggingForFirehose="false" \
+      CommonAttributes="$common_attributes" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
+    --disable-rollback
 }
 
 validate_stack_deployment_status() {

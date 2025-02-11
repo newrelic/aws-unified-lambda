@@ -14,7 +14,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        TEMPLATE_FILE: [lambda-template, logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream]
+        TEMPLATE_FILE: [logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,9 +53,6 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    strategy:
-      matrix:
-        test-case: [test_for_lambda_firehose_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -86,27 +83,8 @@ jobs:
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
-          ./lambda-with-metrics-test.sh ${{ matrix.test-case }}
-
-  clean-up:
-    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3, run-e2e-tests-lambda-firehose-metrics]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    steps:
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
-      - name: Delete Resources
-        env:
-          S3_BUCKET: unified-lambda-e2e-test-templates
-        run:
-          aws s3 rm "s3://$S3_BUCKET" --recursive
+          ./lambda-with-metrics-test.sh test_for_lambda_firehose_stack
+          ./lambda-with-metrics-test.sh test_for_lambda_metrics_polling_stack
+          ./lambda-with-metrics-test.sh test_for_lambda_metrics_streaming_stack
+          ./lambda-with-metrics-test.sh test_for_firehose_metric_polling_stack
+          ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_polling_stack

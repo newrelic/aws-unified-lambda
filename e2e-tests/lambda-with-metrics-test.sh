@@ -7,11 +7,11 @@ source common-scripts/config-file.cfg
 
 test_for_lambda_firehose_stack() {
 cat <<EOF > cloudwatch-parameter.json
-'[{"LogGroupName":"$LOG_GROUP_NAME_LAMBDA_FIREHOSE","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+'[{"LogGroupName":"$LOG_GROUP_NAME_METRICS_CASE","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
 
 cat <<EOF > s3-parameter.json
-'[{"bucket":"$S3_BUCKET_NAME_LAMBDA_FIREHOSE","prefix":"$S3_BUCKET_PREFIX"}]'
+'[{"bucket":"$S3_BUCKET_NAME_METRICS_CASE","prefix":"$S3_BUCKET_PREFIX"}]'
 EOF
 
 cat <<EOF > common_attribute.json
@@ -29,11 +29,11 @@ EOF
 
 test_for_lambda_metrics_polling_stack() {
 cat <<EOF > cloudwatch-parameter.json
-'[{"LogGroupName":"$LOG_GROUP_NAME_LAMBDA_METRICS_POLLING","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+'[{"LogGroupName":"$LOG_GROUP_NAME_METRICS_CASE","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
 
 cat <<EOF > s3-parameter.json
-'[{"bucket":"$S3_BUCKET_NAME_LAMBDA_METRICS_POLLING","prefix":"$S3_BUCKET_PREFIX"}]'
+'[{"bucket":"$S3_BUCKET_NAME_METRICS_CASE","prefix":"$S3_BUCKET_PREFIX"}]'
 EOF
 
 cat <<EOF > common_attribute.json
@@ -51,11 +51,11 @@ EOF
 
 test_for_lambda_metrics_streaming_stack() {
 cat <<EOF > cloudwatch-parameter.json
-'[{"LogGroupName":"$LOG_GROUP_NAME_LAMBDA_METRICS_STREAMING","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+'[{"LogGroupName":"$LOG_GROUP_NAME_METRICS_CASE","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
 EOF
 
 cat <<EOF > s3-parameter.json
-'[{"bucket":"$S3_BUCKET_NAME_LAMBDA_METRICS_STREAMING","prefix":"$S3_BUCKET_PREFIX"}]'
+'[{"bucket":"$S3_BUCKET_NAME_METRICS_CASE","prefix":"$S3_BUCKET_PREFIX"}]'
 EOF
 
 cat <<EOF > common_attribute.json
@@ -73,7 +73,29 @@ EOF
 
 test_for_firehose_metric_polling_stack() {
 cat <<EOF > cloudwatch-parameter.json
-'[{"LogGroupName":"$LOG_GROUP_NAME_LAMBDA_METRICS_STREAMING","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+'[{"LogGroupName":"$LOG_GROUP_NAME_METRICS_CASE","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+EOF
+
+cat <<EOF > common_attribute.json
+'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+EOF
+
+  COMMON_ATTRIBUTES=$(<common_attribute.json)
+  LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
+
+  deploy_firehose_metric_polling_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false"
+  validate_stack_deployment_status "$FIREHOSE_METRIC_POLLING_CASE"
+  delete_stack "$FIREHOSE_METRIC_POLLING_CASE"
+}
+
+
+test_for_lambda_firehose_metric_polling_stack() {
+cat <<EOF > cloudwatch-parameter.json
+'[{"LogGroupName":"$LOG_GROUP_NAME_METRICS_CASE","FilterPattern":"$LOG_GROUP_FILTER_PATTERN"}]'
+EOF
+
+cat <<EOF > s3-parameter.json
+'[{"bucket":"$S3_BUCKET_NAME_METRICS_CASE","prefix":"$S3_BUCKET_PREFIX"}]'
 EOF
 
 cat <<EOF > common_attribute.json
@@ -84,7 +106,9 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   S3_BUCKET_NAMES=$(<s3-parameter.json)
 
-  deploy_firehose_metric_polling_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false"
+  deploy_lambda_firehose_metric_polling_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false" "$S3_BUCKET_NAMES"
+  validate_stack_deployment_status "$FIREHOSE_METRIC_POLLING_CASE"
+  delete_stack "$FIREHOSE_METRIC_POLLING_CASE"
 }
 
 case $1 in
@@ -99,6 +123,9 @@ case $1 in
     ;;
   test_for_firehose_metric_polling_stack)
     test_for_firehose_metric_polling_stack
+    ;;
+  test_for_lambda_firehose_metric_polling_stack)
+    test_for_lambda_firehose_metric_polling_stack
     ;;
   *)
   echo "Invalid test case specified."
