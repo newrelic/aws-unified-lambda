@@ -14,7 +14,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        TEMPLATE_FILE: [logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream, logging-firehose-metric-polling, logging-firehose-metric-streaming, logging-lambda-firehose-metric-polling, logging-lambda-firehose-metric-streaming]
+        TEMPLATE_FILE: [logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream, logging-firehose-metric-polling, logging-firehose-metric-stream, logging-lambda-firehose-metric-polling, logging-lambda-firehose-metric-stream]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
