@@ -1,9 +1,9 @@
 name: E2E Test Workflow
 
 on:
-  pull_request:
-    branches:
-      - develop
+  pull_request_review:
+    types:
+      - submitted
 
 jobs:
   build-templates:
@@ -44,7 +44,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.TEMPLATE_FILE }}.yaml
-          path: .aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml
+          path: .aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml}
+
+      - name: Send failure notification to Slack
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   run-e2e-tests-cloudwatch:
     needs: [build-templates]
@@ -87,6 +96,15 @@ jobs:
           cd e2e-tests
           ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
 
+      - name: Send failure notification to Slack
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   run-e2e-tests-s3:
     needs: [build-templates]
     runs-on: ubuntu-latest
@@ -128,6 +146,15 @@ jobs:
           cd e2e-tests
           ./lambda-s3-trigger.sh ${{ matrix.test-case }}
 
+      - name: Send failure notification to Slack
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   clean-up:
     needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3]
     runs-on: ubuntu-latest
@@ -150,3 +177,12 @@ jobs:
           S3_BUCKET: unified-lambda-e2e-test-templates
         run:
           aws s3 rm "s3://$S3_BUCKET" --recursive
+
+      - name: Send failure notification to Slack
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
