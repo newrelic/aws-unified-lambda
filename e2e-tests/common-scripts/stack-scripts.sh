@@ -118,9 +118,9 @@ deploy_lambda_metric_streaming_stack() {
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       MetricCollectionMode="$METRIC_COLLECTION_MODE" \
-      FirehoseStreamName="$LOGGING_STREAM_NAME" \
-      CloudWatchMetricStreamName="$METRIC_STREAM_NAME" \
-      S3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      FirehoseStreamName="$METRIC_STREAM_NAME" \
+      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME" \
+      S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
       CreateConfigService="false" \
       S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
       S3BucketNames="$s3_bucket_names" \
@@ -158,6 +158,40 @@ deploy_firehose_metric_polling_stack() {
     --disable-rollback
 }
 
+deploy_firehose_metric_streaming_stack() {
+  log_group_config=$1
+  common_attributes=$2
+  store_license_key_in_secret_manager=$3
+
+  echo "Deploying firehose metric streaming stack with name: $FIREHOSE_METRIC_STREAMING_CASE"
+
+  aws cloudformation deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$FIREHOSE_METRIC_STREAMING_TEMPLATE" \
+    --stack-name "$FIREHOSE_METRIC_STREAMING_CASE" \
+    --parameter-overrides \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$INTEGRATION_NAME" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      MetricCollectionMode="$METRIC_COLLECTION_MODE" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      LogGroupConfig="$log_group_config" \
+      FirehoseStreamName="$METRIC_STREAM_NAME" \
+      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME" \
+      S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
+      LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
+      CreateConfigService="false" \
+      S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
+      EnableCloudWatchLoggingForFirehose="false" \
+      CommonAttributes="$common_attributes" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
+    --disable-rollback
+}
+
 deploy_lambda_firehose_metric_polling_stack() {
   log_group_config=$1
   common_attributes=$2
@@ -182,6 +216,43 @@ deploy_lambda_firehose_metric_polling_stack() {
       S3BucketNames="$s3_bucket_names" \
       LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
       LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      EnableCloudWatchLoggingForFirehose="false" \
+      CommonAttributes="$common_attributes" \
+      StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
+    --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
+    --disable-rollback
+}
+
+deploy_lambda_firehose_metric_streaming_stack() {
+  log_group_config=$1
+  common_attributes=$2
+  store_license_key_in_secret_manager=$3
+  s3_bucket_names=$4
+
+
+  echo "Deploying lambda firehose metric streaming stack with name: $LAMBDA_FIREHOSE_METRIC_STREAMING_CASE"
+
+  aws cloudformation deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_METRIC_STREAMING_TEMPLATE" \
+    --stack-name "$LAMBDA_FIREHOSE_METRIC_STREAMING_CASE" \
+    --parameter-overrides \
+      IAMRoleName="$IAM_ROLE_NAME" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      IntegrationName="$INTEGRATION_NAME" \
+      NewRelicAPIKey="$NEW_RELIC_USER_KEY" \
+      PollingIntegrationSlugs="$POLLING_INTEGRATION_SLUGS" \
+      MetricCollectionMode="$METRIC_COLLECTION_MODE" \
+      NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      LogGroupConfig="$log_group_config" \
+      S3BucketNames="$s3_bucket_names" \
+      FirehoseStreamName="$METRIC_STREAM_NAME" \
+      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME" \
+      S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
+      LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
+      CreateConfigService="false" \
+      S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
