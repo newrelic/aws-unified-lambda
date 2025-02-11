@@ -66,7 +66,7 @@ deploy_lambda_firehose_stack() {
       LogGroupConfig="$log_group_config" \
       CommonAttributes="$common_attributes" \
       LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
-      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
     --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
@@ -150,7 +150,7 @@ deploy_firehose_metric_polling_stack() {
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
       LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
-      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
@@ -215,7 +215,7 @@ deploy_lambda_firehose_metric_polling_stack() {
       LogGroupConfig="$log_group_config" \
       S3BucketNames="$s3_bucket_names" \
       LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
-      LoggingS3BackupBucketName="$BACKUP_BUCKET_NAME" \
+      LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
