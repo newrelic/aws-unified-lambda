@@ -7,7 +7,48 @@ on:
       - main
 
 jobs:
+  build-templates:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    strategy:
+      matrix:
+        TEMPLATE_FILE: [lambda-template]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
+          aws-region: us-east-1
+
+      - name: Build SAM Application
+        env:
+          S3_BUCKET: unified-lambda-e2e-test-templates
+        run: |
+          sam build -u --template-file "${{ matrix.TEMPLATE_FILE }}.yaml" --build-dir ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}"
+          sam package --s3-bucket "$S3_BUCKET" --template-file ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}/template.yaml" --output-template-file ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.TEMPLATE_FILE }}.yaml
+          path: .aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml
+
   run-e2e-tests-cloudwatch:
+    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -18,6 +59,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: build-artifact
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -39,9 +85,7 @@ jobs:
           NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
-          cd e2e-tests/common-scripts
-          ./build-templates.sh
-          cd ..
+          cd e2e-tests
           ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
 
   run-e2e-tests-s3:
