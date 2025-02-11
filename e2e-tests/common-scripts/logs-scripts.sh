@@ -90,8 +90,6 @@ create_log_message() {
 validate_logs_meta_data (){
   response=$1
 
-  echo "found response is = $response"
-
   # Validate custom attributes
   if ! echo "$response" | grep -q "\"$CUSTOM_ATTRIBUTE_KEY\":\"$CUSTOM_ATTRIBUTE_VALUE\""; then
     exit_with_error "Custom attribute $CUSTOM_ATTRIBUTE_KEY with value $CUSTOM_ATTRIBUTE_VALUE not found in New Relic logs."
