@@ -2,7 +2,8 @@ name: E2E Test Workflow
 
 on:
   pull_request:
-    -develop
+    branches:
+      -develop
 
 jobs:
   build-templates:
