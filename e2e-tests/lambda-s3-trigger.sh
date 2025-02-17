@@ -1,70 +1,89 @@
 #!/bin/bash
 
-source common-scripts.sh
-source config-file.cfg
+source common-scripts/stack-scripts.sh
+source common-scripts/resource-scripts.sh
+source common-scripts/logs-scripts.sh
+source common-scripts/test-configs.cfg
 
-# test case constants
-S3_TRIGGER_CASE=e2e-s3-trigger-stack
-
-deploy_s3_trigger_stack() {
-  template_file=$1
-  stack_name=$2
-  license_key=$3
-  new_relic_region=$4
-  new_relic_account_id=$5
-  secret_license_key=$6
-  s3_bucket_names=$7
-  common_attributes=$8
-
-  echo "Deploying s3 trigger stack with name: $stack_name"
-
-  sam deploy \
-    --template-file "$template_file" \
-    --stack-name "$stack_name" \
-    --parameter-overrides \
-      LicenseKey="$license_key" \
-      NewRelicRegion="$new_relic_region" \
-      NewRelicAccountId="$new_relic_account_id" \
-      StoreNRLicenseKeyInSecretManager="$secret_license_key" \
-      S3BucketNames="$s3_bucket_names" \
-      LogGroupConfig="''" \
-      CommonAttributes="$common_attributes" \
-    --capabilities CAPABILITY_IAM
-}
-
-validate_lambda_s3_trigger_created() {
-  # this function fetches bucket configurations and
-  # validates if lambda event notification is configured
-  stack_name=$1
-  bucket_name=$2
-  bucket_prefix=$3
-
-  echo "Validating s3 lambda trigger event for stack name: $stack_name, bucket name: $bucket_name, and prefix: $bucket_prefix"
-
-  lambda_function_arn=$(get_lambda_function_arn "$stack_name")
-
-  notification_configuration=$(aws s3api get-bucket-notification-configuration --bucket "$bucket_name")
-
-  lambda_configurations=$(echo "$notification_configuration" |
-      jq --arg lambda "$lambda_function_arn" --arg prefix "$bucket_prefix" '
-      .LambdaFunctionConfigurations[] |
-      select(.LambdaFunctionArn == $lambda and (.Filter.Key.FilterRules[]? | select(.Name == "Prefix" and .Value == $prefix)?))')
-
-  if [ -n "$lambda_configurations" ]; then
-      echo "S3 triggers with prefix '$bucket_prefix' found for Lambda function $lambda_function_arn on bucket $bucket_name:"
-      echo "$lambda_configurations" | jq '.'
-  else
-      exit_with_error "No S3 triggers with prefix '$bucket_prefix' found for Lambda function $lambda_function_arn on bucket $bucket_name."
-  fi
-}
-
+test_logs_for_prefix() {
 cat <<EOF > s3-parameter.json
 '[{"bucket":"$S3_BUCKET_NAME","prefix":"$S3_BUCKET_PREFIX"}]'
 EOF
-S3_BUCKET_NAMES=$(<s3-parameter.json)
-echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
 
-deploy_s3_trigger_stack "$LAMBDA_TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" "$S3_TRIGGER_CASE" "$NEW_RELIC_LICENSE_KEY" "$NEW_RELIC_REGION" "$NEW_RELIC_ACCOUNT_ID" "false" "$S3_BUCKET_NAMES" "''"
-validate_stack_deployment_status "$S3_TRIGGER_CASE"
-validate_lambda_s3_trigger_created "$S3_TRIGGER_CASE" "$S3_BUCKET_NAME" "$S3_BUCKET_PREFIX"
-delete_stack "$S3_TRIGGER_CASE"
+cat <<EOF > common_attribute.json
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
+EOF
+COMMON_ATTRIBUTES=$(<common_attribute.json)
+
+  S3_BUCKET_NAMES=$(<s3-parameter.json)
+  echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
+
+  log_message=$(create_log_message "$LOG_MESSAGE_S3" "")
+
+  deploy_s3_trigger_stack "$S3_PREFIX_CASE" "false" "$S3_BUCKET_NAMES" "$COMMON_ATTRIBUTES"
+  validate_stack_deployment_status "$S3_PREFIX_CASE"
+  validate_lambda_s3_trigger_created "$S3_PREFIX_CASE" "$S3_BUCKET_NAME" "$S3_BUCKET_PREFIX"
+
+  upload_file_to_s3_bucket "$S3_BUCKET_NAME" "$S3_BUCKET_OBJECT_NAME" "$S3_BUCKET_PREFIX" "$log_message"
+  validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_S3" "$S3_BUCKET_PREFIX" "$log_message"
+
+  upload_file_to_s3_bucket "$S3_BUCKET_NAME" "$S3_BUCKET_OBJECT_NAME_FOR_INVALID_CASE" "$S3_BUCKET_PREFIX_INVALID" "$log_message"
+  validate_logs_not_present "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_S3" "$S3_BUCKET_PREFIX_INVALID" "$log_message"
+
+  delete_stack "$S3_PREFIX_CASE"
+}
+
+test_logs_for_secret_manager() {
+cat <<EOF > s3-parameter.json
+'[{"bucket":"$S3_BUCKET_NAME_SECRET_MANAGER","prefix":"$S3_BUCKET_PREFIX"}]'
+EOF
+
+cat <<EOF > common_attribute.json
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
+EOF
+COMMON_ATTRIBUTES=$(<common_attribute.json)
+
+  S3_BUCKET_NAMES=$(<s3-parameter.json)
+  echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
+
+  log_message=$(create_log_message "$LOG_MESSAGE_S3" "")
+
+  deploy_s3_trigger_stack "$S3_SECRET_MANAGER_CASE" "true" "$S3_BUCKET_NAMES" "$COMMON_ATTRIBUTES"
+  validate_stack_deployment_status "$S3_SECRET_MANAGER_CASE"
+  validate_lambda_s3_trigger_created "$S3_SECRET_MANAGER_CASE" "$S3_BUCKET_NAME_SECRET_MANAGER" "$S3_BUCKET_PREFIX"
+  upload_file_to_s3_bucket "$S3_BUCKET_NAME_SECRET_MANAGER" "$S3_BUCKET_OBJECT_NAME" "$S3_BUCKET_PREFIX" "$log_message"
+  validate_logs_in_new_relic "$NEW_RELIC_USER_KEY" "$NEW_RELIC_ACCOUNT_ID" "$ATTRIBUTE_KEY_S3" "$S3_BUCKET_PREFIX" "$log_message"
+  delete_stack "$S3_SECRET_MANAGER_CASE"
+}
+
+test_logs_for_invalid_bucket_name() {
+cat <<EOF > s3-parameter.json
+'[{"bucket":"$S3_BUCKET_NAME_INVALID","prefix":"$S3_BUCKET_PREFIX"}]'
+EOF
+
+  S3_BUCKET_NAMES=$(<s3-parameter.json)
+  echo "Testing for s3 bucket configuration JSON: $(<s3-parameter.json)"
+
+  deploy_s3_trigger_stack "$S3_INVALID_BUCKET_CASE" "false" "$S3_BUCKET_NAMES" "''"
+  validate_stack_deployment_status "$S3_INVALID_BUCKET_CASE"
+
+  # validate that lambda trigger is not created
+  validate_lambda_s3_trigger_not_created "$S3_INVALID_BUCKET_CASE" "$S3_BUCKET_NAME_INVALID" "$S3_BUCKET_PREFIX"
+  delete_stack "$S3_INVALID_BUCKET_CASE"
+}
+
+case $1 in
+  test_logs_for_prefix)
+    test_logs_for_prefix
+    ;;
+  test_logs_for_secret_manager)
+    test_logs_for_secret_manager
+    ;;
+  test_logs_for_invalid_bucket_name)
+    test_logs_for_invalid_bucket_name
+    ;;
+  *)
+  echo "Invalid test case specified."
+  exit 1
+  ;;
+esac

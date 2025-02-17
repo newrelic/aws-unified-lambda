@@ -1,6 +1,50 @@
 #!/bin/bash
 
-source config-file.cfg
+source test-configs.cfg
+
+deploy_cloudwatch_trigger_stack() {
+  stack_name=$1
+  secret_license_key=$2
+  log_group_config=$3
+  common_attributes=$4
+
+  echo "Deploying cloudwatch trigger stack with name: $stack_name"
+
+  sam deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --stack-name "$stack_name" \
+    --parameter-overrides \
+      LicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      StoreNRLicenseKeyInSecretManager="$secret_license_key" \
+      S3BucketNames="''" \
+      LogGroupConfig="$log_group_config" \
+      CommonAttributes="$common_attributes" \
+    --capabilities CAPABILITY_IAM
+}
+
+deploy_s3_trigger_stack() {
+  stack_name=$1
+  secret_license_key=$2
+  s3_bucket_names=$3
+  common_attributes=$4
+
+  echo "Deploying s3 trigger stack with name: $stack_name"
+
+  sam deploy \
+    --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_TEMPLATE" \
+    --stack-name "$stack_name" \
+    --parameter-overrides \
+      LicenseKey="$NEW_RELIC_LICENSE_KEY" \
+      NewRelicRegion="$NEW_RELIC_REGION" \
+      NewRelicAccountId="$NEW_RELIC_ACCOUNT_ID" \
+      StoreNRLicenseKeyInSecretManager="$secret_license_key" \
+      S3BucketNames="$s3_bucket_names" \
+      LogGroupConfig="''" \
+      CommonAttributes="$common_attributes" \
+    --capabilities CAPABILITY_IAM
+}
 
 validate_stack_deployment_status() {
   stack_name=$1
@@ -43,32 +87,12 @@ delete_stack() {
 
   if [ -z "$stack_status" ]; then
     echo "Stack $stack_name has been successfully deleted."
-  elif [ "$stack_status" == "DELETE_FAILED" ]; then
-    echo "Failed to delete stack $stack_name."
   else
-    echo "Unexpected stack status: $stack_status."
+    exit_with_error "Failed to delete stack $stack_name."
   fi
 }
 
 exit_with_error() {
   echo "Error: $1"
   exit 1
-}
-
-get_lambda_function_arn() {
-  stack_name=$1
-
-  lambda_physical_id=$(aws cloudformation describe-stack-resources \
-                    --stack-name "$stack_name" \
-                    --logical-resource-id "$LAMBDA_LOGICAL_RESOURCE_ID" \
-                    --query "StackResources[0].PhysicalResourceId" \
-                    --output text
-  )
-
-  lambda_function_arn=$(aws lambda get-function --function-name "$lambda_physical_id" \
-                  --query "Configuration.FunctionArn" \
-                  --output text
-  )
-
-  echo "$lambda_function_arn"
 }
