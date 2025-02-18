@@ -139,6 +139,8 @@ deploy_firehose_metric_polling_stack() {
 
   echo "Deploying firehose metric polling stack with name: $FIREHOSE_METRIC_POLLING_CASE"
 
+  echo "this is test $LOGGING_STREAM_NAME-fourth"
+
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$FIREHOSE_METRIC_POLLING_TEMPLATE" \
     --stack-name "$FIREHOSE_METRIC_POLLING_CASE" \
@@ -151,7 +153,7 @@ deploy_firehose_metric_polling_stack() {
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
-      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME fourth" \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME-fourth" \
       LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
@@ -180,10 +182,10 @@ deploy_firehose_metric_streaming_stack() {
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
-      FirehoseStreamName="$METRIC_STREAM_NAME fifth" \
-      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME fifth" \
+      FirehoseStreamName="$METRIC_STREAM_NAME-fifth" \
+      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME-fifth" \
       S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
-      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME fifth" \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME-fifth" \
       LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       CreateConfigService="false" \
       S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
