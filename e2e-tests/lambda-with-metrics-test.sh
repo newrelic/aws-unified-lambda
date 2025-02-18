@@ -15,7 +15,7 @@ cat <<EOF > s3-parameter.json
 EOF
 
 cat <<EOF > common_attribute.json
-'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
 EOF
 
   COMMON_ATTRIBUTES=$(<common_attribute.json)
@@ -37,7 +37,7 @@ cat <<EOF > s3-parameter.json
 EOF
 
 cat <<EOF > common_attribute.json
-'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
 EOF
 
   COMMON_ATTRIBUTES=$(<common_attribute.json)
@@ -59,7 +59,7 @@ cat <<EOF > s3-parameter.json
 EOF
 
 cat <<EOF > common_attribute.json
-'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
 EOF
 
   COMMON_ATTRIBUTES=$(<common_attribute.json)
@@ -77,7 +77,7 @@ cat <<EOF > cloudwatch-parameter.json
 EOF
 
 cat <<EOF > common_attribute.json
-'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
 EOF
 
   COMMON_ATTRIBUTES=$(<common_attribute.json)
@@ -94,7 +94,7 @@ cat <<EOF > cloudwatch-parameter.json
 EOF
 
 cat <<EOF > common_attribute.json
-'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
 EOF
 
   COMMON_ATTRIBUTES=$(<common_attribute.json)
@@ -116,7 +116,7 @@ cat <<EOF > s3-parameter.json
 EOF
 
 cat <<EOF > common_attribute.json
-'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
 EOF
 
   COMMON_ATTRIBUTES=$(<common_attribute.json)
@@ -138,7 +138,7 @@ cat <<EOF > s3-parameter.json
 EOF
 
 cat <<EOF > common_attribute.json
-'[{"AttributeName":"$COMMON_ATTRIBUTE_KEY","AttributeValue":"$COMMON_ATTRIBUTE_VALUE"}]'
+'[{"AttributeName":"$CUSTOM_ATTRIBUTE_KEY","AttributeValue":"$CUSTOM_ATTRIBUTE_VALUE"}]'
 EOF
 
   COMMON_ATTRIBUTES=$(<common_attribute.json)
