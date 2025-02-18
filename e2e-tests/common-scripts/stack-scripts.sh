@@ -55,6 +55,8 @@ deploy_lambda_firehose_stack() {
 
   echo "Deploying lambda-firehose stack with name: $LAMBDA_FIREHOSE_CASE"
 
+  echo "this is test $LOGGING_STREAM_NAME-first"
+
   aws cloudformation deploy \
     --template-file "$TEMPLATE_BUILD_DIR/$LAMBDA_FIREHOSE_TEMPLATE" \
     --stack-name "$LAMBDA_FIREHOSE_CASE" \
@@ -65,8 +67,8 @@ deploy_lambda_firehose_stack() {
       S3BucketNames="$s3_bucket_names" \
       LogGroupConfig="$log_group_config" \
       CommonAttributes="$common_attributes" \
-      LoggingFirehoseStreamName=$(("$LOGGING_STREAM_NAME" + "first")) \
-      LoggingS3BackupBucketName=$(("$LOGGING_BACKUP_BUCKET_NAME" + "first")) \
+      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME-first" \
+      LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME-first" \
       EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
     --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
