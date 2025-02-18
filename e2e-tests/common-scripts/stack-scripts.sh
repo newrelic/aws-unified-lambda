@@ -246,7 +246,7 @@ deploy_lambda_firehose_metric_streaming_stack() {
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
       S3BucketNames="$s3_bucket_names" \
-      FirehoseStreamName="$METRIC_STREAM_NAME-seventh" )) \
+      FirehoseStreamName="$METRIC_STREAM_NAME-seventh" \
       CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME-seventh" \
       S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
       LoggingFirehoseStreamName="$LOGGING_STREAM_NAME-seventh" \
