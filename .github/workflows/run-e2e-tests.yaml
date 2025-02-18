@@ -58,14 +58,14 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   run-e2e-tests-cloudwatch:
-    needs: [ build-templates ]
+    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
     strategy:
       matrix:
-        test-case: [ test_logs_with_filter_pattern, test_logs_for_secret_manager, test_logs_for_invalid_log_group ]
+        test-case: [test_logs_with_filter_pattern, test_logs_for_secret_manager, test_logs_for_invalid_log_group]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -108,14 +108,14 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   run-e2e-tests-s3:
-    needs: [ build-templates ]
+    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
     strategy:
       matrix:
-        test-case: [ test_logs_for_prefix, test_logs_for_secret_manager, test_logs_for_invalid_bucket_name ]
+        test-case: [test_logs_for_prefix, test_logs_for_secret_manager, test_logs_for_invalid_bucket_name]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -158,14 +158,14 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   run-e2e-tests-lambda-firehose-metrics:
-    needs: [ build-templates ]
+    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
     strategy:
       matrix:
-        test-case: [ test_for_lambda_firehose_stack, test_for_firehose_metric_polling_stack, test_for_firehose_metric_streaming_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack, test_for_lambda_firehose_metric_polling_stack, test_for_lambda_firehose_metric_streaming_stack ]
+        test-case: [test_for_lambda_firehose_stack, test_for_firehose_metric_polling_stack, test_for_firehose_metric_streaming_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack, test_for_lambda_firehose_metric_polling_stack, test_for_lambda_firehose_metric_streaming_stack]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -208,10 +208,8 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-
-
   clean-up:
-    needs: [ run-e2e-tests-cloudwatch, run-e2e-tests-s3, run-e2e-tests-lambda-firehose-metrics ]
+    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3, run-e2e-tests-lambda-firehose-metrics]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
