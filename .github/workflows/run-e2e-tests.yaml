@@ -1,15 +1,14 @@
 name: E2E Test Workflow
 
 on:
-  pull_request_review:
-    types:
-      - submitted
+  pull_request:
+    branch:
+      - develop
   schedule:
     - cron: '0 0 1 * *'
 
 jobs:
   build-templates:
-    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -58,112 +57,15 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-  run-e2e-tests-cloudwatch:
-    needs: [build-templates]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    strategy:
-      matrix:
-        test-case: [test_logs_with_filter_pattern, test_logs_for_secret_manager, test_logs_for_invalid_log_group]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          path: build-artifacts
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
-      - name: Run e2e tests for cloudwatch
-        env:
-          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
-          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-        run: |
-          cd e2e-tests
-          ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
-
-      - name: Send failure notification to Slack
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notify_when: 'failure'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  run-e2e-tests-s3:
-    needs: [build-templates]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    strategy:
-      matrix:
-        test-case: [test_logs_for_prefix, test_logs_for_secret_manager, test_logs_for_invalid_bucket_name]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          path: build-artifacts
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
-      - name: Run e2e tests for s3
-        env:
-          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
-          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-        run: |
-          cd e2e-tests
-          ./lambda-s3-trigger.sh ${{ matrix.test-case }}
-
-      - name: Send failure notification to Slack
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notify_when: 'failure'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
   run-e2e-tests-lambda-firehose-metrics:
     needs: [ build-templates ]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
+    strategy:
+      matrix:
+        test-case: [ test_for_lambda_firehose_stack, test_for_lambda_metrics_polling_stack, test_for_lambda_metrics_streaming_stack, test_for_firehose_metric_polling_stack, test_for_firehose_metric_streaming_stack, test_for_lambda_firehose_metric_polling_stack, test_for_lambda_firehose_metric_streaming_stack ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -195,51 +97,4 @@ jobs:
         run: |
           cd e2e-tests/
           chmod +x lambda-with-metrics-test.sh
-          ./lambda-with-metrics-test.sh test_for_lambda_firehose_stack
-          ./lambda-with-metrics-test.sh test_for_lambda_metrics_polling_stack
-          ./lambda-with-metrics-test.sh test_for_lambda_metrics_streaming_stack
-          ./lambda-with-metrics-test.sh test_for_firehose_metric_polling_stack
-          ./lambda-with-metrics-test.sh test_for_firehose_metric_streaming_stack
-          ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_polling_stack
-          ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_streaming_stack
-
-      - name: Send failure notification to Slack
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notify_when: 'failure'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  clean-up:
-    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3, run-e2e-tests-lambda-firehose-metrics]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    steps:
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
-      - name: Delete Resources
-        env:
-          S3_BUCKET: unified-lambda-e2e-test-templates
-        run:
-          aws s3 rm "s3://$S3_BUCKET" --recursive
-
-      - name: Send failure notification to Slack
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notify_when: 'failure'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ./lambda-with-metrics-test.sh ${{ matrix.test-case }}

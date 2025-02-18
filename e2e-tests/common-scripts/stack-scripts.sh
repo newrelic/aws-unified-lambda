@@ -65,8 +65,8 @@ deploy_lambda_firehose_stack() {
       S3BucketNames="$s3_bucket_names" \
       LogGroupConfig="$log_group_config" \
       CommonAttributes="$common_attributes" \
-      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
-      LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
+      LoggingFirehoseStreamName=$(("$LOGGING_STREAM_NAME" + "first")) \
+      LoggingS3BackupBucketName=$(("$LOGGING_BACKUP_BUCKET_NAME" + "first")) \
       EnableCloudWatchLoggingForFirehose="$enable_cloudwatch_logging_for_firehose" \
       StoreNRLicenseKeyInSecretManager="$store_license_key_in_secret_manager" \
     --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
@@ -118,8 +118,8 @@ deploy_lambda_metric_streaming_stack() {
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       MetricCollectionMode="$METRIC_COLLECTION_MODE" \
-      FirehoseStreamName="$METRIC_STREAM_NAME" \
-      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME" \
+      FirehoseStreamName=$(("$METRIC_STREAM_NAME" + "third")) \
+      CloudWatchMetricStreamName=$(("$CLOUDWATCH_STREAM_NAME" + "third")) \
       S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
       CreateConfigService="false" \
       S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
@@ -149,7 +149,7 @@ deploy_firehose_metric_polling_stack() {
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
-      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
+      LoggingFirehoseStreamName=$(("$LOGGING_STREAM_NAME" + "fourth")) \
       LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
@@ -178,10 +178,10 @@ deploy_firehose_metric_streaming_stack() {
       NewRelicLicenseKey="$NEW_RELIC_LICENSE_KEY" \
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
-      FirehoseStreamName="$METRIC_STREAM_NAME" \
-      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME" \
+      FirehoseStreamName=$(("$METRIC_STREAM_NAME" + "fifth" )) \
+      CloudWatchMetricStreamName=$(("$CLOUDWATCH_STREAM_NAME" + "fifth")) \
       S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
-      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
+      LoggingFirehoseStreamName=$(("$LOGGING_STREAM_NAME" + "fifth")) \
       LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       CreateConfigService="false" \
       S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
@@ -214,7 +214,7 @@ deploy_lambda_firehose_metric_polling_stack() {
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
       S3BucketNames="$s3_bucket_names" \
-      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
+      LoggingFirehoseStreamName=$(("$LOGGING_STREAM_NAME" + "sixth")) \
       LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       EnableCloudWatchLoggingForFirehose="false" \
       CommonAttributes="$common_attributes" \
@@ -246,10 +246,10 @@ deploy_lambda_firehose_metric_streaming_stack() {
       NewRelicRegion="$NEW_RELIC_REGION" \
       LogGroupConfig="$log_group_config" \
       S3BucketNames="$s3_bucket_names" \
-      FirehoseStreamName="$METRIC_STREAM_NAME" \
-      CloudWatchMetricStreamName="$CLOUDWATCH_STREAM_NAME" \
+      FirehoseStreamName=$(("$METRIC_STREAM_NAME" + "seventh" )) \
+      CloudWatchMetricStreamName=$(("$CLOUDWATCH_STREAM_NAME" + "seventh")) \
       S3BackupBucketName="$METRICS_BACKUP_BUCKET_NAME" \
-      LoggingFirehoseStreamName="$LOGGING_STREAM_NAME" \
+      LoggingFirehoseStreamName=$(("$LOGGING_STREAM_NAME" + "seventh")) \
       LoggingS3BackupBucketName="$LOGGING_BACKUP_BUCKET_NAME" \
       CreateConfigService="false" \
       S3ConfigBucketName="$S3_CONFIG_BUCKET_NAME" \
