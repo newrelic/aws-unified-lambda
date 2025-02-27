@@ -7,9 +7,6 @@ const InstrumentationProvider = "aws"
 // InstrumentationName is a parameter necessary for Entity Synthesis at New Relic.
 const InstrumentationName = "lambda"
 
-// InstrumentationVersion is a parameter necessary for Entity Synthesis at New Relic.
-const InstrumentationVersion = "1.0.0"
-
 // CustomMetaData is the name of the environment variable for custom meta data.
 const CustomMetaData = "CUSTOM_META_DATA"
 
