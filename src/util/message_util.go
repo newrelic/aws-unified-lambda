@@ -3,8 +3,10 @@ package util
 
 import (
 	"encoding/json"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"regexp"
 	"time"
+
+	"github.com/newrelic/aws-unified-lambda-logging/common"
 )
 
 // SplitLargeMessages splits a large message into smaller messages if its length exceeds the maximum message size.
@@ -92,4 +94,48 @@ func ParseCloudTrailEvents(message string) ([]string, error) {
 		records = append(records, string(recordJSON))
 	}
 	return records, nil
+}
+
+// AddRequestID extracts the requestId from the message and updates the attributes map.
+// It returns the last requestId found to keep track of the requestId across log messages.
+func AddRequestID(message string, logAttribute common.LogAttributes, lastRequestID string, regularExpression *regexp.Regexp) string {
+
+	// Check if the message is in JSON format
+	var jsonMessage map[string]interface{}
+	if err := json.Unmarshal([]byte(message), &jsonMessage); err == nil {
+		// Message is in JSON format
+		if requestID, ok := ExtractRequestIDFromJSON(jsonMessage); ok {
+			lastRequestID = requestID
+			logAttribute["requestId"] = lastRequestID
+		} else if lastRequestID != "" {
+			logAttribute["requestId"] = lastRequestID
+		}
+	} else {
+		// Message is in text format
+		matches := regularExpression.FindStringSubmatch(message)
+		// if message has valid regular expression then matches will have 2 elements, first element is the whole string and second element is the requestId
+		if len(matches) == 2 {
+			lastRequestID = matches[1]
+			logAttribute["requestId"] = lastRequestID
+		} else if lastRequestID != "" {
+			logAttribute["requestId"] = lastRequestID
+		}
+
+	}
+	return lastRequestID
+}
+
+// ExtractRequestIDFromJSON extracts the requestId from the JSON message.
+// It returns the requestId and a boolean indicating if the requestId was found.
+// The function handle both the cases where the requestId is at the top level or inside the record.requestId.
+func ExtractRequestIDFromJSON(jsonMessage map[string]interface{}) (string, bool) {
+	if requestID, ok := jsonMessage["requestId"].(string); ok {
+		return requestID, true
+	}
+	if record, ok := jsonMessage["record"].(map[string]interface{}); ok {
+		if requestID, ok := record["requestId"].(string); ok {
+			return requestID, true
+		}
+	}
+	return "", false
 }

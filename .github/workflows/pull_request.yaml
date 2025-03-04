@@ -3,6 +3,7 @@ name: Pull Request Workflow
 on:
   pull_request:
     branches:
+      - develop
       - main
 
 jobs:
@@ -124,7 +125,7 @@ jobs:
           go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: src/coverage/coverage.html
