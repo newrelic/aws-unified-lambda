@@ -54,7 +54,7 @@ jobs:
             echo "All files are properly formatted."
           fi
       
-      - name: Validate SAM Templates
+      - name: Validate SAM Templates 
         run: |
           for template in $(find . -name ".yaml" -o -name ".yml"); do
           echo "Validating template: $template"
