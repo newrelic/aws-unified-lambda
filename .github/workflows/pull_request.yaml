@@ -7,15 +7,11 @@ on:
       - main
 
 jobs:
-  validate-template-code:
+  validate-lambda-code:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
 
       - name: Install golint
         run: |
@@ -54,13 +50,24 @@ jobs:
           else
             echo "All files are properly formatted."
           fi
-      
+
+  validate-template:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
       - name: Validate SAM Templates
         run: |
           for template in $(find . -name ".yaml" -o -name ".yml"); do
           echo "Validating template: $template"
           sam validate --template-file "$template" --region us-east-2 --lint
           done
+
   security:
     runs-on: ubuntu-latest
 
