@@ -15,7 +15,7 @@ jobs:
 
       - name: Install AWS SAM CLI
         run: |
-          pip install aws-sam-cli
+          pip install aws-sam-cli==1.134.0
 
       - name: Install golint
         run: |
@@ -57,7 +57,7 @@ jobs:
       
       - name: Validate SAM Templates
         run: |
-          for template in $(find . -name ".yaml" -o -name ".yml"); do
+          for template in $(find . -maxdepth 1 \( -name "*.yaml" -o -name "*.yml" \)); do
           echo "Validating template: $template"
           sam validate --template-file "$template" --region us-east-2 --lint
           done
