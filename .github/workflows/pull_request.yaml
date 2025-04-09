@@ -57,7 +57,7 @@ jobs:
       
       - name: Validate SAM Templates
         run: |
-          for template in $(find . -name "*.yaml" -o -name "*.yml"); do
+          for template in $(find . -maxdepth 1 \( -name "*.yaml" -o -name "*.yml" \)); do
           echo "Validating template: $template"
           sam validate --template-file "$template" --region us-east-2 --lint
           done
@@ -129,25 +129,3 @@ jobs:
         with:
           name: coverage-report
           path: src/coverage/coverage.html
-
-  test-job:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install ruamel
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruamel.yaml
-
-      - name: Run Python Script to Update lambda-template.yaml
-        run: python workflow-scripts/update_lambda_template.py
-
-      - name: Verify the changes
-        run: cat lambda-template.yaml
