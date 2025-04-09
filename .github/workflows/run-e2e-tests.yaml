@@ -6,61 +6,7 @@ on:
       - develop
 
 jobs:
-  build-templates:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    strategy:
-      matrix:
-        TEMPLATE_FILE: [lambda-template]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install ruamel
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruamel.yaml
-
-      - name: Run Python Script to Update lambda-template.yaml
-        run: python workflow-scripts/update_lambda_template.py
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
-      - name: Build SAM Application
-        env:
-          S3_BUCKET: unified-lambda-e2e-test-templates
-        run: |
-          sam build -u --template-file "${{ matrix.TEMPLATE_FILE }}.yaml" --build-dir ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}"
-          sam package --s3-bucket "$S3_BUCKET" --template-file ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}/template.yaml" --output-template-file ".aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.TEMPLATE_FILE }}.yaml
-          path: .aws-sam/build/${{ matrix.TEMPLATE_FILE }}/${{ matrix.TEMPLATE_FILE }}.yaml
-
   run-e2e-tests-cloudwatch:
-    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -101,7 +47,6 @@ jobs:
           ./lambda-cloudwatch-trigger.sh ${{ matrix.test-case }}
 
   run-e2e-tests-s3:
-    needs: [build-templates]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
