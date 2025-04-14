@@ -41,4 +41,5 @@ jobs:
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests
+          chmod +x delete-stack.sh
           ./delete-stack.sh
