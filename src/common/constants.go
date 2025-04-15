@@ -7,9 +7,6 @@ const InstrumentationProvider = "aws"
 // InstrumentationName is a parameter necessary for Entity Synthesis at New Relic.
 const InstrumentationName = "lambda"
 
-// InstrumentationVersion is a parameter necessary for Entity Synthesis at New Relic.
-const InstrumentationVersion = "1.0.0"
-
 // CustomMetaData is the name of the environment variable for custom meta data.
 const CustomMetaData = "CUSTOM_META_DATA"
 
@@ -46,3 +43,9 @@ const CloudTrailDigestRegex = ".*_CloudTrail-Digest_.*\\.json\\.gz$"
 
 // CloudTrailRegex is the regex pattern for CloudTrail files.
 const CloudTrailRegex = ".*_CloudTrail_.*\\.json\\.gz$"
+
+// RequestIDRegex is the regex pattern for RequestId.
+const RequestIDRegex = "RequestId:\\s([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"
+
+// LambdaLogGroup is prefix for identifing log group belonging to lambda
+const LambdaLogGroup = "/aws/lambda"
