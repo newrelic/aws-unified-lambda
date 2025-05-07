@@ -4,7 +4,7 @@ Description: New Relic Template to forward logs using S3 bucket and/or cloudwatc
 Mappings:
   VersionMap:
     MetricsForwarder:
-      LambdaInstrumentationVersion: '1.0.0'  #This will be dynamially updated by release workflow
+      LambdaInstrumentationVersion: 1.0.0   #This will be dynamially updated by release workflow
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: NewRelic-log-forwarding
