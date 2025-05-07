@@ -50,5 +50,6 @@ jobs:
           echo "Extracted version: $version"
 
           # Replace the version in lambda-template.yaml
-          sed -i "s/LambdaInstrumentationVersion: '.*'/LambdaInstrumentationVersion: '$version'/" lambda-template.yaml
+          #sed -i "s/LambdaInstrumentationVersion: '.*'/LambdaInstrumentationVersion: '$version'/" lambda-template.yaml
+          sed -i "s/LambdaInstrumentationVersion: [^ ]*/LambdaInstrumentationVersion: $version/" lambda-template.yaml
           cat lambda-template.yaml
