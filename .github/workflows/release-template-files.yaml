@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '*.yaml'
 
 jobs:
   build-and-deploy:
@@ -42,6 +40,17 @@ jobs:
 
       - name: Verify the changes
         run: cat lambda-template.yaml
+
+      # Update the LambdaInstrumentationVersion in lambda-template.yaml
+      - name: Update LambdaInstrumentationVersion in lambda-template.yaml
+        run: |
+          # Extract the version from version.go
+          version=$(grep 'const InstrumentationVersion' src/common/version.go | awk -F '"' '{print $2}')
+          echo "Extracted version: $version"
+
+          # Replace the version in lambda-template.yaml
+          sed -i "s/LambdaInstrumentationVersion: [^ ]*/LambdaInstrumentationVersion: $version/" lambda-template.yaml
+          cat lambda-template.yaml
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
