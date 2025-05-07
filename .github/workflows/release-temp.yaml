@@ -1,0 +1,56 @@
+name: Build and Deploy Template files
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      # Update the LambdaInstrumentationVersion in lambda-template.yaml
+      - name: Update LambdaInstrumentationVersion in lambda-template.yaml
+        run: |
+          # Extract the version from version.go
+          cat lambda-template.yaml
+          version=$(grep 'const InstrumentationVersion' src/common/version.go | awk -F '"' '{print $2}')
+          echo "Extracted version: $version"
+
+          # Replace the version in lambda-template.yaml
+          sed -i "s/LambdaInstrumentationVersion: '.*'/LambdaInstrumentationVersion: '$version'/" lambda-template.yaml
+          cat lambda-template.yaml
+
+      # modify lambda CodeUri to production as s3 bucket destination
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install ruamel
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruamel.yaml
+
+      - name: Run Python Script to Update lambda-template.yaml
+        run: python workflow-scripts/update_lambda_template.py
+
+      - name: Verify the changes
+        run: cat lambda-template.yaml
+
+   

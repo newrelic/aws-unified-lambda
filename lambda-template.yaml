@@ -1,7 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: New Relic Template to forward logs using S3 bucket and/or cloudwatch using lambda
-
+Mappings:
+  VersionMap:
+    MetricsForwarder:
+      LambdaInstrumentationVersion: '1.0.0'  #This will be dynamially updated by release workflow
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: NewRelic-log-forwarding
@@ -30,7 +33,9 @@ Metadata:
         default: 'Common Attributes to be added to the log events'
       StoreNRLicenseKeyInSecretManager: 
         default: 'Store New Relic License Key in AWS Secrets Manager'
-        
+      EventBridgeScheduleExpression:
+        default: 'Expression for EventBridge rule'
+  
 Parameters:
   LicenseKey:
     Type: String
@@ -68,7 +73,14 @@ Parameters:
     Default: "true"
     AllowedValues:
       - "true"
-      - "false" 
+      - "false"
+  EventBridgeScheduleExpression:
+    Type: String
+    Description: "The schedule expression for the EventBridge rule. Defaults to rate(5 minutes)"
+    Default: "rate(5 minutes)"
+    AllowedPattern: "^rate\\([0-9]+ (minutes|hours)\\)$"
+    ConstraintDescription: "The parameter value must be a valid rate expression."
+  
 
 Conditions:
   ShouldCreateSecret: !Equals [ !Ref StoreNRLicenseKeyInSecretManager, "true" ]
@@ -452,6 +464,28 @@ Resources:
         LogGroupConfig: !Ref LogGroupConfig
         LambdaFunctionArn: !GetAtt NewRelicLogsServerlessLogForwarder.Arn
         InvalidLogGroups: !GetAtt NewRelicLogsResourceForLogGroupArnConstruction.InvalidLogGroups
+
+  NewRelicMetricsForwarderTrigger:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL:  https://s3.us-east-2.amazonaws.com/unified-lambda-serverless/logging-metrics-template.yaml
+      Parameters:
+        LicenseKey: !Ref LicenseKey
+        NewRelicRegion: !Ref NewRelicRegion
+        NewRelicAccountId: !Ref NewRelicAccountId
+        StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
+        EventBridgeScheduleExpression: !Ref EventBridgeScheduleExpression
+        LogForwarderLambdaInputJSON: 
+          Fn::Sub:
+            - |
+              [
+                {
+                  "Arn": "${NewRelicLogsServerlessLogForwarder.Arn}",
+                  "InstrumentationVersion": "${lambda_instrumentation_version}"
+                }
+              ]
+            - lambda_instrumentation_version: !FindInMap [VersionMap, MetricsForwarder, LambdaInstrumentationVersion]
+        LogForwarderFirehoseInputJSON: ""
 
 Outputs:
   NewRelicLogsLambdaFunctionArn:
