@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  SNSTopicArn:
+    Type: String
+    Description: ARN of the SNS topic which will act as trigger to lambda
+  LambdaFunctionArn:
+    Type: String
+    Description: Lambda arn to add event trigger
+
+
+Resources:
+  NewRelicSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref SNSTopicArn
+      Protocol: lambda
+      Endpoint: !Ref LambdaFunctionArn
+  
+  NewRelicSnsInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref LambdaFunctionArn
+      Principal: "sns.amazonaws.com"
+      SourceArn: !Ref SNSTopicArn
+

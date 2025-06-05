@@ -26,6 +26,8 @@ Metadata:
         default: 'Log Groups name & filter (if applicable)'        
       S3BucketNames:
         default: 'S3 bucket Names & Prefix (if applicable)'
+      SNSTopicArn:
+        default: 'SNS Topic ARN (if applicable)'
       CommonAttributes:
         default: 'Common Attributes to be added to the log events'
       StoreNRLicenseKeyInSecretManager: 
@@ -55,6 +57,10 @@ Parameters:
     Type: String
     Description: "JSON array of objects representing your S3Bucketname and prefixes (if applicable) For example: [{\"bucket\":\"bucket1\",\"prefix\":\"prefix/\"}]"
     Default: ""
+  SNSTopicArn:
+    Type: String
+    Description: "SNS Topic Arn that will trigger the lambda function (if applicable)"
+    Default: ""
   LogGroupConfig:
     Description: "JSON array of objects representing your LogGroup and Filters (if applicable). For example: [{\"LogGroupName\":\"logGroup1\",\"FilterPattern\":\"filter1\"}]"
     Type: String
@@ -73,6 +79,7 @@ Parameters:
 Conditions:
   ShouldCreateSecret: !Equals [ !Ref StoreNRLicenseKeyInSecretManager, "true" ]
   AddS3Trigger: !Not [ !Equals [!Ref S3BucketNames , ""]]
+  AddSNSTrigger: !Not [ !Equals [!Ref SNSTopicArn , ""]]
   AddCloudwatchTrigger: !Not [ !Equals [!Ref LogGroupConfig , ""]]
   IsCommonAttributesNotBlank: !Not [!Equals [!Ref CommonAttributes, ""]]
 
@@ -440,6 +447,15 @@ Resources:
       Parameters:
         S3BucketArnsWithoutPrefix: !GetAtt NewRelicLogsResourceForS3ARNConstruction.ParentBucketARNs
         S3BucketArns: !GetAtt NewRelicLogsResourceForS3ARNConstruction.BucketARNs
+        LambdaFunctionArn: !GetAtt NewRelicLogsServerlessLogForwarder.Arn
+
+  NewRelicLogsSNSTrigger:
+    Type: 'AWS::CloudFormation::Stack'
+    Condition: AddSNSTrigger
+    Properties:
+      TemplateURL: sns-trigger-stack.yaml
+      Parameters:
+        SNSTopicArn: !Ref SNSTopicArn
         LambdaFunctionArn: !GetAtt NewRelicLogsServerlessLogForwarder.Arn
 
   NewRelicLogsCloudWatchTrigger:
