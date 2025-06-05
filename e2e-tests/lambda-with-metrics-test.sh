@@ -22,8 +22,7 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   S3_BUCKET_NAMES=$(<s3-parameter.json)
 
-  deploy_lambda_firehose_stack "$S3_BUCKET_NAMES" "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false" "false"
-  validate_stack_deployment_status "$LAMBDA_FIREHOSE_CASE"
+  
   delete_stack "$LAMBDA_FIREHOSE_CASE"
 }
 
@@ -44,8 +43,7 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   S3_BUCKET_NAMES=$(<s3-parameter.json)
 
-  deploy_lambda_metric_polling_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false" "$S3_BUCKET_NAMES"
-  validate_stack_deployment_status "$LAMBDA_METRIC_POLLING_CASE"
+  
   delete_stack "$LAMBDA_METRIC_POLLING_CASE"
 }
 
@@ -66,8 +64,7 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   S3_BUCKET_NAMES=$(<s3-parameter.json)
 
-  deploy_lambda_metric_streaming_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false" "$S3_BUCKET_NAMES"
-  validate_stack_deployment_status "$LAMBDA_METRIC_STREAMING_CASE"
+  
   delete_stack "$LAMBDA_METRIC_STREAMING_CASE"
 }
 
@@ -83,8 +80,7 @@ EOF
   COMMON_ATTRIBUTES=$(<common_attribute.json)
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
 
-  deploy_firehose_metric_polling_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false"
-  validate_stack_deployment_status "$FIREHOSE_METRIC_POLLING_CASE"
+  
   delete_stack "$FIREHOSE_METRIC_POLLING_CASE"
 }
 
@@ -100,8 +96,7 @@ EOF
   COMMON_ATTRIBUTES=$(<common_attribute.json)
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
 
-  deploy_firehose_metric_streaming_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false"
-  validate_stack_deployment_status "$FIREHOSE_METRIC_STREAMING_CASE"
+
   delete_stack "$FIREHOSE_METRIC_STREAMING_CASE"
 }
 
@@ -123,8 +118,6 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   S3_BUCKET_NAMES=$(<s3-parameter.json)
 
-  deploy_lambda_firehose_metric_polling_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false" "$S3_BUCKET_NAMES"
-  validate_stack_deployment_status "$LAMBDA_FIREHOSE_METRIC_POLLING_CASE"
   delete_stack "$LAMBDA_FIREHOSE_METRIC_POLLING_CASE"
 }
 
@@ -145,8 +138,6 @@ EOF
   LOG_GROUP_NAMES=$(<cloudwatch-parameter.json)
   S3_BUCKET_NAMES=$(<s3-parameter.json)
 
-  deploy_lambda_firehose_metric_streaming_stack "$LOG_GROUP_NAMES" "$COMMON_ATTRIBUTES" "false" "$S3_BUCKET_NAMES"
-  validate_stack_deployment_status "$LAMBDA_FIREHOSE_METRIC_STREAMING_CASE"
   delete_stack "$LAMBDA_FIREHOSE_METRIC_STREAMING_CASE"
 }
 
