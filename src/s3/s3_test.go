@@ -7,9 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dsnet/compress/bzip2"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
-	"github.com/newrelic/aws-unified-lambda-logging/util"
 	"io"
 	"strings"
 	"testing"
@@ -17,6 +14,9 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/dsnet/compress/bzip2"
+	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"github.com/newrelic/aws-unified-lambda-logging/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -242,6 +242,12 @@ func TestGetLogsFromS3Event(t *testing.T) {
 		})
 	}
 }
+
+// TestGetLogsFromSNSEvent is a unit test function that tests the GetLogsFromSNSEvent function.
+// It tests different scenarios of SNS event processing and verifies the expected results.
+// func TestGetLogsFromSNSEvent(t *testing.T) {
+//todo
+// }
 
 // compressBzip2 compresses the given data using the bzip2 algorithm and returns the compressed data.
 // It uses the bzip2.WriterConfig with the BestCompression level for optimal compression.
