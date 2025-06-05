@@ -63,3 +63,38 @@ func TestUnmarshalJSONCloudWatchLogsData(t *testing.T) {
 	assert.NotEqual(t, expected.EventType, event.EventType)
 	assert.NotEqual(t, expected.CloudwatchLogsData, event.CloudwatchLogsData)
 }
+
+// TestUnmarshalJSONSNSEvent is a unit test function that tests the unmarshaling of a JSON SNS event.
+// It verifies that the unmarshaled event matches the expected event.
+func TestUnmarshalJSONSNSEvent(t *testing.T) {
+	input := []byte(`{
+		"Records": [
+			{
+				"EventSource": "aws:sns",
+				"Sns": {
+					"Message": "test message"
+				}
+			}
+		]
+	}`)
+	expected := Event{
+		EventType: SNS,
+		SNSEvent: events.SNSEvent{
+			Records: []events.SNSEventRecord{
+				{
+					EventSource: "aws:sns",
+					SNS: events.SNSEntity{
+						Message: "test message",
+					},
+				},
+			},
+		},
+	}
+
+	var event Event
+	err := json.Unmarshal(input, &event)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected.EventType, event.EventType)
+	assert.Equal(t, expected.SNSEvent, event.SNSEvent)
+}
