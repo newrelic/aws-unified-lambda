@@ -93,8 +93,14 @@ func GetLogsFromSNSEvent(ctx context.Context, snsEvent events.SNSEvent, awsConfi
 			for _, msg := range messageData.Records {
 				log.Debugf("processing sns event message: %v", msg)
 
+				// When S3 events come via SNS, the object key is URL-encoded.
+				// We need to decode it before we can use it to fetch the object.
 				decodedKey, err := url.QueryUnescape(msg.S3.Object.Key)
 				if err != nil {
+					log.Errorf("failed to URL decode S3 object key from SNS message: %v", err)
+					continue
+				}
+
 				// The Following are the common attributes for all log messages.
 				// New Relic uses these common attributes to generate Unique Entity ID.
 				attributes := common.LogAttributes{
