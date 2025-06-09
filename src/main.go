@@ -45,6 +45,14 @@ func handlerWithArgs(ctx context.Context, event unmarshal.Event, nrClient util.N
 			log.Fatalf("error creating s3 client: %v", err)
 		}
 		err = s3.GetLogsFromS3Event(ctx, event.S3Event, awsConfiguration, channel, s3Client, s3.DefaultReaderFactory)
+	case unmarshal.SNS:
+		log.Debugf("processing sns event: %v", event.SNSEvent)
+		var s3Client s3.ObjectClient
+		s3Client, err = s3.NewS3Client(ctx)
+		if err != nil {
+			log.Fatalf("error creating s3 client: %v", err)
+		}
+		err = s3.GetLogsFromSNSEvent(ctx, event.SNSEvent, awsConfiguration, channel, s3Client, s3.DefaultReaderFactory)
 	default:
 		log.Error("unable to process unknown event type. Supported event types are cloudwatch and s3")
 		return nil
