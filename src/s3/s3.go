@@ -8,6 +8,7 @@ import (
 	"context"
 	jsonpkg "encoding/json"
 	"io"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -92,12 +93,14 @@ func GetLogsFromSNSEvent(ctx context.Context, snsEvent events.SNSEvent, awsConfi
 			for _, msg := range messageData.Records {
 				log.Debugf("processing sns event message: %v", msg)
 
+				decodedKey, err := url.QueryUnescape(msg.S3.Object.Key)
+				if err != nil {
 				// The Following are the common attributes for all log messages.
 				// New Relic uses these common attributes to generate Unique Entity ID.
 				attributes := common.LogAttributes{
 					"aws.accountId":            awsConfiguration.AccountID,
 					"logBucketName":            msg.S3.Bucket.Name,
-					"logObjectKey":             msg.S3.Object.Key,
+					"logObjectKey":             decodedKey, // Use the decoded key
 					"aws.realm":                awsConfiguration.Realm,
 					"aws.region":               awsConfiguration.Region,
 					"instrumentation.provider": common.InstrumentationProvider,
@@ -110,7 +113,7 @@ func GetLogsFromSNSEvent(ctx context.Context, snsEvent events.SNSEvent, awsConfi
 					return err
 				}
 
-				if err := buildMeltLogsFromS3Bucket(ctx, msg.S3.Bucket.Name, msg.S3.Object.Key, channel, attributes, s3Client, readerFactory); err != nil {
+				if err := buildMeltLogsFromS3Bucket(ctx, msg.S3.Bucket.Name, decodedKey, channel, attributes, s3Client, readerFactory); err != nil {
 					return err
 				}
 			}
