@@ -33,8 +33,8 @@ Metadata:
         default: 'Common Attributes to be added to the log events'
       StoreNRLicenseKeyInSecretManager: 
         default: 'Store New Relic License Key in AWS Secrets Manager'
-      EventBridgeScheduleExpression:
-        default: 'Expression for EventBridge rule'
+      MonitoringTier:
+        default: 'Metrics Monitoring Collection Tier'
   
 Parameters:
   LicenseKey:
@@ -74,12 +74,18 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  EventBridgeScheduleExpression:
+  MonitoringTier:
     Type: String
-    Description: "The schedule expression for the EventBridge rule. Defaults to rate(5 minutes)"
-    Default: "rate(5 minutes)"
-    AllowedPattern: "^rate\\([0-9]+ (minutes|hours)\\)$"
-    ConstraintDescription: "The parameter value must be a valid rate expression."
+    Description: |
+      Determines the metrics collection frequency and detail level:
+      - None: Send No metrics
+      - Basic: Limited metrics every 15 minutes
+      - Advanced: Full metrics every 5 minutes
+    Default: "Basic"
+    AllowedValues:
+      - "None"
+      - "Basic"
+      - "Advanced"
   
 
 Conditions:
@@ -87,6 +93,7 @@ Conditions:
   AddS3Trigger: !Not [ !Equals [!Ref S3BucketNames , ""]]
   AddCloudwatchTrigger: !Not [ !Equals [!Ref LogGroupConfig , ""]]
   IsCommonAttributesNotBlank: !Not [!Equals [!Ref CommonAttributes, ""]]
+  EnableMetricsForwarder: !Not [ !Equals [!Ref MonitoringTier, "None"]]
 
 Resources:
   NewRelicLogsLicenseKeySecret:
@@ -467,14 +474,19 @@ Resources:
 
   NewRelicMetricsForwarderTrigger:
     Type: 'AWS::CloudFormation::Stack'
+    Condition: EnableMetricsForwarder
     Properties:
       TemplateURL:  https://s3.us-east-2.amazonaws.com/unified-lambda-serverless/logging-metrics-template.yaml
       Parameters:
         LicenseKey: !Ref LicenseKey
+        LicenseKeySecretArn: !If 
+          - ShouldCreateSecret
+          - !Sub '{ "LicenseKey": "${NewRelicLogsLicenseKeySecret}" }'
+          - ""
         NewRelicRegion: !Ref NewRelicRegion
         NewRelicAccountId: !Ref NewRelicAccountId
         StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
-        EventBridgeScheduleExpression: !Ref EventBridgeScheduleExpression
+        MonitoringTier: !Ref MonitoringTier
         LogForwarderLambdaInputJSON: 
           Fn::Sub:
             - |

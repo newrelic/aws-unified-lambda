@@ -36,9 +36,9 @@ Metadata:
         default: 'Enables CloudWatch logging for Logging Firehose stream'
       StoreNRLicenseKeyInSecretManager:
         default: 'Store New Relic License Key in AWS Secrets Manager'
-      EventBridgeScheduleExpression:
-        default: 'Expression for EventBridge rule'
-        
+      MonitoringTier:
+        default: 'Metrics Monitoring Collection Tier'
+
 Parameters:
   LicenseKey:
     Type: String
@@ -99,12 +99,18 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  EventBridgeScheduleExpression:
+  MonitoringTier:
     Type: String
-    Description: "The schedule expression for the EventBridge rule. Defaults to rate(5 minutes)"
-    Default: "rate(5 minutes)"
-    AllowedPattern: "^rate\\([0-9]+ (minutes|hours)\\)$"
-    ConstraintDescription: "The parameter value must be a valid rate expression."
+    Description: |
+      Determines the metrics collection frequency and detail level:
+      - None: Send No metrics
+      - Basic: Limited metrics every 15 minutes
+      - Advanced: Full metrics every 5 minutes
+    Default: "Basic"
+    AllowedValues:
+      - "None"
+      - "Basic"
+      - "Advanced"
   
  
 Resources:
@@ -121,8 +127,8 @@ Resources:
         LogGroupConfig: "" 
         CommonAttributes: !Ref CommonAttributes
         StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
-        EventBridgeScheduleExpression: !Ref EventBridgeScheduleExpression
-        
+        MonitoringTier: !Ref MonitoringTier
+
   NewRelicLogsFirehose:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
@@ -137,5 +143,4 @@ Resources:
         EnableCloudWatchLoggingForFirehose: !Ref EnableCloudWatchLoggingForFirehose
         CommonAttributes: !Ref CommonAttributes
         StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
-        EventBridgeScheduleExpression: !Ref EventBridgeScheduleExpression
-   
+        MonitoringTier: !Ref MonitoringTier

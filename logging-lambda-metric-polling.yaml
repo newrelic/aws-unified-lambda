@@ -39,7 +39,7 @@ Metadata:
           - LogGroupConfig
           - CommonAttributes
           - StoreNRLicenseKeyInSecretManager
-          - EventBridgeScheduleExpression
+          - MonitoringTier
 
     ParameterLabels:
       IntegrationName:
@@ -62,8 +62,8 @@ Metadata:
         default: 'Common Attributes to be added to the log events'
       StoreNRLicenseKeyInSecretManager:
         default: 'Store New Relic License Key in AWS Secrets Manager'
-      EventBridgeScheduleExpression:
-        default: 'Expression for EventBridge rule'
+      MonitoringTier:
+        default: 'Metrics Monitoring Collection Tier'
 
 Parameters:
   IAMRoleName:
@@ -122,12 +122,18 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  EventBridgeScheduleExpression:
+  MonitoringTier:
     Type: String
-    Description: "The schedule expression for the EventBridge rule. Defaults to rate(5 minutes)"
-    Default: "rate(5 minutes)"
-    AllowedPattern: "^rate\\([0-9]+ (minutes|hours)\\)$"
-    ConstraintDescription: "The parameter value must be a valid rate expression."    
+    Description: |
+      Determines the metrics collection frequency and detail level:
+      - None: Send No metrics
+      - Basic: Limited metrics every 15 minutes
+      - Advanced: Full metrics every 5 minutes
+    Default: "Basic"
+    AllowedValues:
+      - "None"
+      - "Basic"
+      - "Advanced"
 
 Resources: 
   NewRelicLogsLoggingLambda:
@@ -142,7 +148,7 @@ Resources:
         LogGroupConfig : !Ref LogGroupConfig
         CommonAttributes : !Ref CommonAttributes
         StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
-        EventBridgeScheduleExpression: !Ref EventBridgeScheduleExpression
+        MonitoringTier: !Ref MonitoringTier
 
   # New Relic Metrics Polling Stack
   NewrelicMetricsPollingStack:
