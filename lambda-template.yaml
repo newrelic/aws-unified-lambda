@@ -77,7 +77,7 @@ Parameters:
   MonitoringTier:
     Type: String
     Description: |
-      Determines the metrics collection frequency and detail level:
+      Determines the metrics collection frequency and detail level for Lambda Log Forwarder
       - None: Send No metrics
       - Basic: Limited metrics every 15 minutes
       - Advanced: Full metrics every 5 minutes
@@ -481,7 +481,7 @@ Resources:
         LicenseKey: !Ref LicenseKey
         LicenseKeySecretArn: !If 
           - ShouldCreateSecret
-          - !Sub '{ "LicenseKey": "${NewRelicLogsLicenseKeySecret}" }'
+          - !Ref NewRelicLogsLicenseKeySecret
           - ""
         NewRelicRegion: !Ref NewRelicRegion
         NewRelicAccountId: !Ref NewRelicAccountId

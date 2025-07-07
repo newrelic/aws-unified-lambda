@@ -155,7 +155,7 @@ Parameters:
   MonitoringTier:
     Type: String
     Description: |
-      Determines the metrics collection frequency and detail level:
+      Determines the metrics collection frequency and detail level for Log Forwarder:
       - None: Send No metrics
       - Basic: Limited metrics every 15 minutes
       - Advanced: Full metrics every 5 minutes
