@@ -200,36 +200,57 @@ jobs:
 #          ./lambda-with-metrics-test.sh ${{ matrix.test-case }}
 
       - name: Run e2e test for lambda firehose stack
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_lambda_firehose_stack
 
       - name: Run e2e test for firehose metric polling stack
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_firehose_metric_polling_stack
 
       - name: Run e2e test for firehose metric streaming stack
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_firehose_metric_streaming_stack
 
       - name: Run e2e test for lambda metrics polling stack
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_lambda_metrics_polling_stack
 
       - name: Run e2e test for lambda metrics streaming stack
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_lambda_metrics_streaming_stack
 
       - name: Run e2e test for lambda firehose metric polling stack
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_polling_stack
 
       - name: Run e2e test for lambda firehose metric streaming stack
+        env:
+          NEW_RELIC_USER_KEY: ${{ secrets.NEW_RELIC_USER_KEY }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_streaming_stack
