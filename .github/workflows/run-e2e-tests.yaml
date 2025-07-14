@@ -240,6 +240,8 @@ jobs:
           cd e2e-tests/
           ./lambda-with-metrics-test.sh test_for_lambda_metrics_polling_stack
           ./lambda-with-metrics-test.sh test_for_lambda_metrics_streaming_stack
+          ./lambda-with-metrics-test.sh test_for_firehose_metric_polling_stack
+          ./lambda-with-metrics-test.sh test_for_firehose_metric_streaming_stack
           ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_polling_stack
           ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_streaming_stack
 
