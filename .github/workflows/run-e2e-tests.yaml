@@ -249,35 +249,35 @@ jobs:
 #          notify_when: 'failure'
 #        env:
 #          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  clean-up:
-    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3, run-e2e-tests-lambda-firehose, run-e2e-tests-lambda-firehose-metrics]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    steps:
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
-          aws-region: us-east-1
-
-      - name: Delete Resources
-        env:
-          S3_BUCKET: unified-lambda-e2e-test-templates
-        run:
-          aws s3 rm "s3://$S3_BUCKET" --recursive
-
-      - name: Send failure notification to Slack
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notify_when: 'failure'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#
+#  clean-up:
+#    needs: [run-e2e-tests-cloudwatch, run-e2e-tests-s3, run-e2e-tests-lambda-firehose, run-e2e-tests-lambda-firehose-metrics]
+#    runs-on: ubuntu-latest
+#    permissions:
+#      id-token: write
+#      contents: write
+#    steps:
+#      - name: Install AWS SAM CLI
+#        run: |
+#          pip install aws-sam-cli
+#
+#      - name: Configure AWS Credentials
+#        uses: aws-actions/configure-aws-credentials@v3
+#        with:
+#          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
+#          aws-region: us-east-1
+#
+#      - name: Delete Resources
+#        env:
+#          S3_BUCKET: unified-lambda-e2e-test-templates
+#        run:
+#          aws s3 rm "s3://$S3_BUCKET" --recursive
+#
+#      - name: Send failure notification to Slack
+#        if: always()
+#        uses: ravsamhq/notify-slack-action@v1
+#        with:
+#          status: ${{ job.status }}
+#          notify_when: 'failure'
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
