@@ -13,7 +13,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        TEMPLATE_FILE: [logging-firehose-metric-polling, logging-firehose-metric-stream]
+        TEMPLATE_FILE: [lambda-template, logging-lambda-firehose-template, logging-lambda-metric-polling, logging-lambda-metric-stream, logging-firehose-metric-polling, logging-firehose-metric-stream, logging-lambda-firehose-metric-polling, logging-lambda-firehose-metric-stream]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -238,8 +238,10 @@ jobs:
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
         run: |
           cd e2e-tests/
-          ./lambda-with-metrics-test.sh test_for_firehose_metric_polling_stack
-          ./lambda-with-metrics-test.sh test_for_firehose_metric_streaming_stack
+          ./lambda-with-metrics-test.sh test_for_lambda_metrics_polling_stack
+          ./lambda-with-metrics-test.sh test_for_lambda_metrics_streaming_stack
+          ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_polling_stack
+          ./lambda-with-metrics-test.sh test_for_lambda_firehose_metric_streaming_stack
 
 #      - name: Send failure notification to Slack
 #        if: always()
