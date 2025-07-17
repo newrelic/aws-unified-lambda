@@ -2,4 +2,4 @@
 package common
 
 // InstrumentationVersion is a parameter necessary for Entity Synthesis at New Relic.
-const InstrumentationVersion = "1.1.0"
+const InstrumentationVersion = "1.1.1"
