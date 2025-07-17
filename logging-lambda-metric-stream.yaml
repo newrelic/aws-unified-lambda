@@ -4,15 +4,15 @@ Description: New Relic Template to forward logs using S3 bucket or cloudwatch us
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: NewRelic-log-forwarding
+    Name: NewRelic-Log-Forwarder-Lambda-Metric-Streaming
     Description: Send log data from AWS to New Relic.
     Author: New Relic
     SpdxLicenseId: Apache-2.0
     LicenseUrl: LICENSE.txt
     ReadmeUrl: README.md
-    HomePageUrl: https://github.com/newrelic/aws-unified-logging #TODO change this url once the repo is public
-    SemanticVersion: 0.0.17
-    SourceCodeUrl: https://github.com/newrelic/aws-unified-logging #TODO change this url once the repo is public
+    HomePageUrl: https://github.com/newrelic/aws-unified-logging
+    SemanticVersion: 1.1.0
+    SourceCodeUrl: https://github.com/newrelic/aws-unified-logging
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
