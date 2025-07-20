@@ -44,6 +44,7 @@ Metadata:
           - LoggingS3BackupBucketName
           - EnableCloudWatchLoggingForFirehose
           - StoreNRLicenseKeyInSecretManager
+          - MonitoringTier
       -
         Label:
           default: 'AWS Config Service Configuration (Optional)'
@@ -88,6 +89,8 @@ Metadata:
         default: 'Common Attributes to be added to the log events'
       StoreNRLicenseKeyInSecretManager:
         default: 'Store New Relic License Key in AWS Secrets Manager'  
+      MonitoringTier:
+        default: 'Metrics Monitoring Collection Tier' 
         
 Parameters:
   IAMRoleName:
@@ -206,6 +209,18 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"     
+  MonitoringTier:
+    Type: String
+    Description: |
+      Determines the metrics collection frequency and detail level for Firehose Log Forwarder
+      - None: Send No metrics
+      - Basic: Limited metrics every 15 minutes
+      - Advanced: Full metrics every 5 minutes
+    Default: "Basic"
+    AllowedValues:
+      - "None"
+      - "Basic"
+      - "Advanced"
 
 Resources: 
   NewRelicLogsFirehose:
@@ -222,6 +237,7 @@ Resources:
         EnableCloudWatchLoggingForFirehose: !Ref EnableCloudWatchLoggingForFirehose
         CommonAttributes: !Ref CommonAttributes
         StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
+        MonitoringTier: !Ref MonitoringTier
 
   # New Relic Metrics Stack
   NewrelicMetricsStack:

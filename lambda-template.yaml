@@ -1,7 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: New Relic Template to forward logs using S3 bucket and/or cloudwatch using lambda
-
+Mappings:
+  VersionMap:
+    MetricsForwarder:
+      LambdaInstrumentationVersion: 1.0.0   #This will be dynamially updated by release workflow
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: NewRelic-Log-Forwarder-Lambda
@@ -30,7 +33,9 @@ Metadata:
         default: 'Common Attributes to be added to the log events'
       StoreNRLicenseKeyInSecretManager: 
         default: 'Store New Relic License Key in AWS Secrets Manager'
-        
+      MonitoringTier:
+        default: 'Metrics Monitoring Collection Tier'
+  
 Parameters:
   LicenseKey:
     Type: String
@@ -68,13 +73,27 @@ Parameters:
     Default: "true"
     AllowedValues:
       - "true"
-      - "false" 
+      - "false"
+  MonitoringTier:
+    Type: String
+    Description: |
+      Determines the metrics collection frequency and detail level for Lambda Log Forwarder
+      - None: Send No metrics
+      - Basic: Limited metrics every 15 minutes
+      - Advanced: Full metrics every 5 minutes
+    Default: "Basic"
+    AllowedValues:
+      - "None"
+      - "Basic"
+      - "Advanced"
+  
 
 Conditions:
   ShouldCreateSecret: !Equals [ !Ref StoreNRLicenseKeyInSecretManager, "true" ]
   AddS3Trigger: !Not [ !Equals [!Ref S3BucketNames , ""]]
   AddCloudwatchTrigger: !Not [ !Equals [!Ref LogGroupConfig , ""]]
   IsCommonAttributesNotBlank: !Not [!Equals [!Ref CommonAttributes, ""]]
+  EnableMetricsForwarder: !Not [ !Equals [!Ref MonitoringTier, "None"]]
 
 Resources:
   NewRelicLogsLicenseKeySecret:
@@ -452,6 +471,33 @@ Resources:
         LogGroupConfig: !Ref LogGroupConfig
         LambdaFunctionArn: !GetAtt NewRelicLogsServerlessLogForwarder.Arn
         InvalidLogGroups: !GetAtt NewRelicLogsResourceForLogGroupArnConstruction.InvalidLogGroups
+
+  NewRelicMetricsForwarderTrigger:
+    Type: 'AWS::CloudFormation::Stack'
+    Condition: EnableMetricsForwarder
+    Properties:
+      TemplateURL:  https://s3.us-east-2.amazonaws.com/unified-lambda-serverless/logging-metrics-template.yaml
+      Parameters:
+        LicenseKey: !Ref LicenseKey
+        LicenseKeySecretArn: !If 
+          - ShouldCreateSecret
+          - !Ref NewRelicLogsLicenseKeySecret
+          - ""
+        NewRelicRegion: !Ref NewRelicRegion
+        NewRelicAccountId: !Ref NewRelicAccountId
+        StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
+        MonitoringTier: !Ref MonitoringTier
+        LogForwarderLambdaInputJSON: 
+          Fn::Sub:
+            - |
+              [
+                {
+                  "Arn": "${NewRelicLogsServerlessLogForwarder.Arn}",
+                  "InstrumentationVersion": "${lambda_instrumentation_version}"
+                }
+              ]
+            - lambda_instrumentation_version: !FindInMap [VersionMap, MetricsForwarder, LambdaInstrumentationVersion]
+        LogForwarderFirehoseInputJSON: ""
 
 Outputs:
   NewRelicLogsLambdaFunctionArn:
