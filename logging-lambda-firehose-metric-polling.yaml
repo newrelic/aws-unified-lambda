@@ -11,7 +11,7 @@ Metadata:
     LicenseUrl: LICENSE.txt
     ReadmeUrl: README.md
     HomePageUrl: https://github.com/newrelic/aws-unified-logging
-    SemanticVersion: 1.1.0
+    SemanticVersion: 1.1.1
     SourceCodeUrl: https://github.com/newrelic/aws-unified-logging
   AWS::CloudFormation::Interface:
     ParameterGroups:
