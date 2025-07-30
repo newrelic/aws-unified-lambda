@@ -17,6 +17,11 @@ properties['CodeUri'] = {
 }
 
 mappings = {
+    'VersionMap':{
+        'MetricsForwarder': {
+            'LambdaInstrumentationVersion': '1.0.0'
+        }
+    },
     'RegionToS3Bucket': {
         'us-east-1': {'BucketArn': 'unified-logging-lambda-code-us-east-1'},
         'us-east-2': {'BucketArn': 'unified-logging-lambda-code-us-east-2'},

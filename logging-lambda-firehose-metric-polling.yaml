@@ -40,7 +40,8 @@ Metadata:
           - LoggingFirehoseStreamName
           - LoggingS3BackupBucketName
           - EnableCloudWatchLoggingForFirehose
-          - StoreNRLicenseKeyInSecretManager          
+          - StoreNRLicenseKeyInSecretManager 
+          - MonitoringTier         
 
     ParameterLabels:
       IntegrationName:
@@ -69,6 +70,8 @@ Metadata:
         default: 'Enables CloudWatch logging for Logging Firehose stream'
       StoreNRLicenseKeyInSecretManager:
         default: 'Store New Relic License Key in AWS Secrets Manager'
+      MonitoringTier:
+        default: 'Metrics Monitoring Collection Tier'
 
 Parameters:
   IAMRoleName:
@@ -148,7 +151,19 @@ Parameters:
     Default: "true"
     AllowedValues:
       - "true"
-      - "false"       
+      - "false"   
+  MonitoringTier:
+    Type: String
+    Description: |
+      Determines the metrics collection frequency and detail level for Log Forwarder:
+      - None: Send No metrics
+      - Basic: Limited metrics every 15 minutes
+      - Advanced: Full metrics every 5 minutes
+    Default: "Basic"
+    AllowedValues:
+      - "None"
+      - "Basic"
+      - "Advanced"   
 
 Resources: 
   NewRelicLogsLoggingLambdaFirehose:
@@ -166,6 +181,7 @@ Resources:
         LoggingS3BackupBucketName: !Ref LoggingS3BackupBucketName
         EnableCloudWatchLoggingForFirehose: !Ref EnableCloudWatchLoggingForFirehose
         StoreNRLicenseKeyInSecretManager: !Ref StoreNRLicenseKeyInSecretManager
+        MonitoringTier: !Ref MonitoringTier
 
   # New Relic Metrics Polling Stack
   NewrelicMetricsPollingStack:
