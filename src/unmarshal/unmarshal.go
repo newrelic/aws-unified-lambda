@@ -3,6 +3,7 @@ package unmarshal
 
 import (
 	"encoding/json"
+
 	"github.com/newrelic/aws-unified-lambda-logging/logger"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -12,6 +13,7 @@ import (
 const (
 	CLOUDWATCH = "cloudwatch" // CLOUDWATCH represents the event type for CloudWatch logs.
 	S3         = "s3"         // S3 represents the event type for S3 events.
+	SNS        = "sns"        // SNS represents the event type for SNS events.
 )
 
 var log = logger.NewLogrusLogger(logger.WithDebugLevel())
@@ -21,6 +23,7 @@ type Event struct {
 	EventType          string                    // EventType represents the type of the event.
 	CloudwatchLogsData events.CloudwatchLogsData // CloudwatchLogsData represents the CloudWatch logs data.
 	S3Event            events.S3Event            // S3Event represents the S3 event data.
+	SNSEvent           events.SNSEvent           // SNSEvent represents the SNS event data.
 }
 
 // UnmarshalJSON unmarshals the JSON data into the Event struct.
@@ -46,6 +49,16 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	if err == nil && len(s3Event.Records) != 0 && s3Event.Records[0].EventName != "" {
 		event.EventType = S3
 		event.S3Event = s3Event
+
+		return err
+	}
+
+	//Try to unmarshal the event as SNSEvent
+	var snsEvent events.SNSEvent
+	err = json.Unmarshal(data, &snsEvent)
+	if err == nil && len(snsEvent.Records) != 0 && snsEvent.Records[0].EventSource == "aws:sns" {
+		event.EventType = SNS
+		event.SNSEvent = snsEvent
 
 		return err
 	}

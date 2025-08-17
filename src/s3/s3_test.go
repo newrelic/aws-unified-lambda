@@ -7,9 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dsnet/compress/bzip2"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
-	"github.com/newrelic/aws-unified-lambda-logging/util"
 	"io"
 	"strings"
 	"testing"
@@ -17,6 +14,9 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/dsnet/compress/bzip2"
+	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"github.com/newrelic/aws-unified-lambda-logging/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -238,6 +238,144 @@ func TestGetLogsFromS3Event(t *testing.T) {
 
 			// Assert that all expectations were met
 			mockS3Client.AssertExpectations(t)
+			mockReaderFactory.AssertExpectations(t)
+		})
+	}
+}
+
+// TestGetLogsFromSNSEvent is a unit test function that tests the GetLogsFromSNSEvent function.
+// It tests different scenarios of SNS event processing and verifies the expected results.
+func TestGetLogsFromSNSEvent(t *testing.T) {
+	tests := []struct {
+		name          string                   // Name of the test case
+		setupSNSMock  func(*MockAPI)           // Function to set up the SNS mock
+		setupRFMock   func(*MockReaderFactory) // Function to set up the ReaderFactory mock
+		expectedError error                    // Expected error from the function
+		batchSize     int                      // Expected number of batches
+		Key           string                   // Key of the SNS Message object
+	}{
+		{
+			name: "Successful SNS event processing",
+			setupSNSMock: func(m *MockAPI) {
+				m.On("GetObject", mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{
+					Body: io.NopCloser(bytes.NewReader([]byte("log content"))),
+				}, nil)
+			},
+			setupRFMock: func(m *MockReaderFactory) {
+				m.On("Create", mock.Anything, "test-key.gz").Return(strings.NewReader("log content"), nil)
+			},
+			expectedError: nil,
+			batchSize:     1,
+			Key:           "test-key.gz",
+		},
+		{
+			name: "Error fetching S3 object from SNS event",
+			setupSNSMock: func(m *MockAPI) {
+				m.On("GetObject", mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{}, errors.New("s3 error"))
+			},
+			setupRFMock:   func(m *MockReaderFactory) {},
+			expectedError: errors.New("s3 error"),
+			Key:           "test-key.gz",
+		},
+		{
+			name: "Successful SNS S3 event processing. Used to test the maximum number of messages in a batch.",
+			setupSNSMock: func(m *MockAPI) {
+				m.On("GetObject", mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{
+					Body: io.NopCloser(bytes.NewReader([]byte(generateLogsOnCount(common.MaxPayloadMessages + 10)))),
+				}, nil)
+			},
+			setupRFMock: func(m *MockReaderFactory) {
+				m.On("Create", mock.Anything, "test-key.gz").Return(strings.NewReader(generateLogsOnCount(common.MaxPayloadMessages+10)), nil)
+			},
+			expectedError: nil,
+			batchSize:     2,
+			Key:           "test-key.gz",
+		},
+		{
+			name: "Successful SNS S3 event processing. Used to test the maximum payload size in a batch.",
+			setupSNSMock: func(m *MockAPI) {
+				m.On("GetObject", mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{
+					Body: io.NopCloser(bytes.NewReader([]byte(generateLogOnSize(1024*1024*1 + 10)))),
+				}, nil)
+			},
+			setupRFMock: func(m *MockReaderFactory) {
+				m.On("Create", mock.Anything, "test-key.gz").Return(strings.NewReader(generateLogOnSize(1024*1024*1+10)), nil)
+			},
+			expectedError: nil,
+			batchSize:     2,
+			Key:           "test-key.gz",
+		},
+		{
+			name:          "CloudTrail Digest Ignore Scenario.",
+			setupSNSMock:  func(m *MockAPI) {},
+			setupRFMock:   func(m *MockReaderFactory) {},
+			expectedError: nil,
+			batchSize:     0,
+			Key:           "test-key_CloudTrail-Digest_2021-09-01T00-00-00Z.json.gz",
+		},
+		{
+			name: "Reading CloudTrail logs from SNS event",
+			setupSNSMock: func(m *MockAPI) {
+				m.On("GetObject", mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{
+					Body: io.NopCloser(bytes.NewReader([]byte(generateCloudTrailTestLogs(4)))),
+				}, nil)
+			},
+			setupRFMock: func(m *MockReaderFactory) {
+				m.On("Create", mock.Anything, "test-key_CloudTrail_2021-09-01T00-00-00Z.json.gz").Return(strings.NewReader(generateCloudTrailTestLogs(4)), nil)
+			},
+			expectedError: nil,
+			batchSize:     1,
+			Key:           "test-key_CloudTrail_2021-09-01T00-00-00Z.json.gz",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			awsConfiguration := util.AWSConfiguration{
+				AccountID: "123456789012",
+				Realm:     "aws",
+				Region:    "us-west-2",
+			}
+
+			channel := make(chan common.DetailedLogsBatch, 2)
+			messageBytes := []byte(fmt.Sprintf("{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"nr-log-test-bucket\"},\"object\":{\"key\":\"%s\"}}}]}", tc.Key))
+			snsEvent := events.SNSEvent{
+				Records: []events.SNSEventRecord{
+					{
+						SNS: events.SNSEntity{
+							Message: string(messageBytes),
+						},
+					},
+				},
+			}
+
+			mockSNSClient := new(MockAPI)
+			tc.setupSNSMock(mockSNSClient)
+
+			mockReaderFactory := new(MockReaderFactory)
+			tc.setupRFMock(mockReaderFactory)
+
+			// Call the GetLogsFromS3Event function
+			err := GetLogsFromSNSEvent(ctx, snsEvent, awsConfiguration, channel, mockSNSClient, mockReaderFactory.Create)
+			close(channel)
+
+			// Check for expected errors
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				batchCount := 0
+				for batch := range channel {
+					assert.NotEmpty(t, batch)
+					batchCount++
+				}
+				assert.Equal(t, tc.batchSize, batchCount)
+			}
+
+			// Assert that all expectations were met
+			mockSNSClient.AssertExpectations(t)
 			mockReaderFactory.AssertExpectations(t)
 		})
 	}
