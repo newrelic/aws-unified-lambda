@@ -6,7 +6,9 @@ import (
 	"compress/bzip2"
 	"compress/gzip"
 	"context"
+	jsonpkg "encoding/json"
 	"io"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -56,6 +58,73 @@ func GetLogsFromS3Event(ctx context.Context, s3Event events.S3Event, awsConfigur
 
 		if err := buildMeltLogsFromS3Bucket(ctx, record.S3.Bucket.Name, record.S3.Object.URLDecodedKey, channel, attributes, s3Client, readerFactory); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// GetLogsFromSNSEvent batches logs from SNS into DetailedJson format and sends them to the specified channel.
+// It returns an error if there is a problem retrieving or sending the logs.
+func GetLogsFromSNSEvent(ctx context.Context, snsEvent events.SNSEvent, awsConfiguration util.AWSConfiguration, channel chan common.DetailedLogsBatch, s3Client ObjectClient, readerFactory ReaderFactory) error {
+	for _, record := range snsEvent.Records {
+
+		// Unmarshal the Message field into a json array
+		var messageData struct {
+			Records []struct {
+				S3 struct {
+					Bucket struct {
+						Name string `json:"name"`
+					}
+					Object struct {
+						Key string `json:"key"`
+					}
+				}
+			}
+		}
+
+		err := jsonpkg.Unmarshal([]byte(record.SNS.Message), &messageData)
+		if err != nil {
+			log.Errorf("failed to unmarshal SNS message: %v", err)
+			continue
+		}
+
+		if len(messageData.Records) != 0 {
+			for _, msg := range messageData.Records {
+				log.Debugf("processing sns event message: %v", msg)
+
+				// When S3 events come via SNS, the object key is URL-encoded.
+				// We need to decode it before we can use it to fetch the object.
+				decodedKey, err := url.QueryUnescape(msg.S3.Object.Key)
+				if err != nil {
+					log.Errorf("failed to URL decode S3 object key from SNS message: %v", err)
+					continue
+				}
+
+				// The Following are the common attributes for all log messages.
+				// New Relic uses these common attributes to generate Unique Entity ID.
+				attributes := common.LogAttributes{
+					"aws.accountId":            awsConfiguration.AccountID,
+					"logBucketName":            msg.S3.Bucket.Name,
+					"logObjectKey":             decodedKey, // Use the decoded key
+					"aws.realm":                awsConfiguration.Realm,
+					"aws.region":               awsConfiguration.Region,
+					"instrumentation.provider": common.InstrumentationProvider,
+					"instrumentation.name":     common.InstrumentationName,
+					"instrumentation.version":  common.InstrumentationVersion,
+				}
+
+				if err := util.AddCustomMetaData(os.Getenv(common.CustomMetaData), attributes); err != nil {
+					log.Errorf("failed to add custom metadata %v", err)
+					return err
+				}
+
+				if err := buildMeltLogsFromS3Bucket(ctx, msg.S3.Bucket.Name, decodedKey, channel, attributes, s3Client, readerFactory); err != nil {
+					return err
+				}
+			}
+		} else {
+			log.Debugf("SNS event Message field contains no records")
 		}
 	}
 
