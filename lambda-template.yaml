@@ -137,7 +137,7 @@ Resources:
   NewRelicLogsAttributeValidationLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
-    DependsOn: NewRelicLogsAttributeValidationLambda
+    Condition: IsCommonAttributesNotBlank
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/${NewRelicLogsAttributeValidationLambda}"
