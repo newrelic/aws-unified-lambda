@@ -134,6 +134,14 @@ Resources:
       Runtime: python3.12
       Timeout: 120
 
+  NewRelicLogsAttributeValidationLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    DependsOn: NewRelicLogsAttributeValidationLambda
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${NewRelicLogsAttributeValidationLambda}"
+
   NewRelicLogsResourceForAttributeValidation:
     Type: AWS::CloudFormation::CustomResource
     Condition: IsCommonAttributesNotBlank
@@ -175,6 +183,14 @@ Resources:
                 - secretsmanager:GetSecretValue
                 - secretsmanager:DescribeSecret
               Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*'
+
+  NewRelicLogsServerlessLogForwarderLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    DependsOn: NewRelicLogsServerlessLogForwarder
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${NewRelicLogsServerlessLogForwarder}"
 
   NewRelicLogsS3ARNConstructionLambdaIAMRole:
     Type: "AWS::IAM::Role"
@@ -306,6 +322,14 @@ Resources:
       Timeout: 120
       Role: !GetAtt NewRelicLogsS3ARNConstructionLambdaIAMRole.Arn
 
+  NewRelicLogsS3ARNConstructionLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    DependsOn: NewRelicLogsS3ARNConstructionLambda
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${NewRelicLogsS3ARNConstructionLambda}"
+
   NewRelicLogsResourceForS3ARNConstruction:
     Type: AWS::CloudFormation::CustomResource
     Condition: AddS3Trigger
@@ -424,6 +448,14 @@ Resources:
       Runtime: python3.12
       Timeout: 120
       Role: !GetAtt NewRelicLogsLogGroupArnConstructionLambdaIAMRole.Arn
+
+  NewRelicLogsLogGroupArnConstructionLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    DependsOn: NewRelicLogsLogGroupArnConstructionLambda
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${NewRelicLogsLogGroupArnConstructionLambda}"
 
   NewRelicLogsResourceForLogGroupArnConstruction:
     Type: AWS::CloudFormation::CustomResource

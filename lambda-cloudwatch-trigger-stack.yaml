@@ -193,3 +193,11 @@ Resources:
       Role: !GetAtt NewRelicLogsCloudWatchLambdaIAMRole.Arn
       Runtime: python3.12
       Timeout: 120
+
+  NewRelicLogsCloudWatchLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    DependsOn: NewRelicLogsCloudWatchLambda
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${NewRelicLogsCloudWatchLambda}"
