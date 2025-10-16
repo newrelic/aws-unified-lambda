@@ -187,9 +187,7 @@ Resources:
   NewRelicLogsServerlessLogForwarderLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
-    DependsOn: NewRelicLogsServerlessLogForwarder
     Properties:
-      RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/${NewRelicLogsServerlessLogForwarder}"
 
   NewRelicLogsS3ARNConstructionLambdaIAMRole:
@@ -325,7 +323,7 @@ Resources:
   NewRelicLogsS3ARNConstructionLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
-    DependsOn: NewRelicLogsS3ARNConstructionLambda
+    Condition: AddS3Trigger
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/${NewRelicLogsS3ARNConstructionLambda}"
@@ -452,7 +450,7 @@ Resources:
   NewRelicLogsLogGroupArnConstructionLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
-    DependsOn: NewRelicLogsLogGroupArnConstructionLambda
+    Condition: AddCloudwatchTrigger
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/${NewRelicLogsLogGroupArnConstructionLambda}"

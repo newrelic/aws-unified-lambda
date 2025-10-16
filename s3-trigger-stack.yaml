@@ -204,7 +204,7 @@ Resources:
   NewRelicLogsS3BucketTriggerLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
-    DependsOn: NewRelicLogsS3BucketTriggerLambda
+    Condition: HasValidS3Buckets
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/${NewRelicLogsS3BucketTriggerLambda}"

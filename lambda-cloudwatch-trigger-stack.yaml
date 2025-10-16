@@ -197,7 +197,7 @@ Resources:
   NewRelicLogsCloudWatchLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
-    DependsOn: NewRelicLogsCloudWatchLambda
+    Condition: HasValidLogGroups
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/${NewRelicLogsCloudWatchLambda}"
