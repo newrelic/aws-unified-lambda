@@ -1,11 +1,17 @@
 name: E2E Test Workflow
 
+#on:
+#  pull_request_review:
+#    types:
+#      - submitted
+#  schedule:
+#    - cron: '0 0 1 * *'
+
 on:
-  pull_request_review:
-    types:
-      - submitted
-  schedule:
-    - cron: '0 0 1 * *'
+  pull_request:
+    branches:
+      - develop
+      - main
 
 jobs:
   build-templates:
