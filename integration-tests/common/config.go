@@ -8,7 +8,7 @@ const (
 	// LambdaHandler name of the lambda handler
 	LambdaHandler = "main"
 	// LambdaRuntime type of lambda runtime
-	LambdaRuntime = "go1.x"
+	LambdaRuntime = "provided.al2023"
 	// QueryEndpoint query endpoint to fetch logs from new relic
 	QueryEndpoint = "https://api.newrelic.com/graphql"
 	// ZipFileName executable zip file name
