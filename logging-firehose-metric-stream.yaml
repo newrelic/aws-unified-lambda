@@ -227,7 +227,7 @@ Resources:
   NewrelicMetricsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://nr-downloads-main.s3.amazonaws.com/cloud_integrations/aws/cloudformation/newrelic-cloudformation-mstreams.yml
+      TemplateURL: https://cf-stack-template-akumarparmar-beyond-cf-py-runtime-upgrade.s3.us-east-1.amazonaws.com/newrelic-cloudformation-mstreams.yml
       Parameters:
         IAMRoleName: !Ref IAMRoleName
         NewRelicAccountId: !Ref NewRelicAccountId
