@@ -3,16 +3,16 @@ Transform: AWS::Serverless-2016-10-31
 Description: New Relic Template to forward logs using firehose and metrics using polling from AWS to New Relic
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: NewRelic-Firehose-Log-Forwarding
+    Name: NewRelic-Log-Forwarder-Firehose-Metric-Polling
     Description: Send log data from AWS to New Relic.
     Author: New Relic
     SpdxLicenseId: Apache-2.0
     LicenseUrl: LICENSE.txt
     ReadmeUrl: README.md
-    HomePageUrl: https://github.com/newrelic/aws-unified-firehose-logging # TODO update this when the repo is public.
-    SemanticVersion: 0.0.17
-    SourceCodeUrl: https://github.com/newrelic/aws-unified-firehose-logging # TODO update this when the repo is public.
-    
+    HomePageUrl: https://github.com/newrelic/aws-unified-logging
+    SemanticVersion: 1.1.1
+    SourceCodeUrl: https://github.com/newrelic/aws-unified-logging
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
