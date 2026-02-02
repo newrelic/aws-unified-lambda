@@ -41,4 +41,4 @@ require (
 
 module github.com/newrelic/aws-unified-lambda-logging
 
-go 1.24.4
+go 1.25.5
