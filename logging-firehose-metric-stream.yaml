@@ -11,7 +11,7 @@ Metadata:
     LicenseUrl: LICENSE.txt
     ReadmeUrl: README.md
     HomePageUrl: https://github.com/newrelic/aws-unified-logging
-    SemanticVersion: 1.1.1
+    SemanticVersion: 1.1.2
     SourceCodeUrl: https://github.com/newrelic/aws-unified-logging
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -227,7 +227,7 @@ Resources:
   NewrelicMetricsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://nr-downloads-main.s3.amazonaws.com/cloud_integrations/aws/cloudformation/newrelic-cloudformation-mstreams.yml
+      TemplateURL: https://nr-downloads-main.s3.amazonaws.com/cloud_integrations/aws/cloudformation/updated-cft-templates/newrelic-cloudformation-mstreams.yml
       Parameters:
         IAMRoleName: !Ref IAMRoleName
         NewRelicAccountId: !Ref NewRelicAccountId
