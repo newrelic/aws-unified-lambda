@@ -21,7 +21,7 @@ AWS unified logging application sends logs data from CloudWatch and S3 to New Re
 
 ## Requirements
 
-- AWS CLI must be installed and configured with Administrator permission
+- AWS CLI must be installed and configured with Administrator permission 
 - Docker must be installed. Refer [Docker documentation.](https://www.docker.com/community-edition)
 - Golang must be installed. Refer [Golang documentation](https://golang.org)
 - Install the AWS SAM CLI. Refer [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
