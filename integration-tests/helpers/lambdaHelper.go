@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	integrationtests "github.com/newrelic/aws-unified-lambda-logging/common"
+	integrationtests "github.com/newrelic/aws-unified-lambda/integration-tests/common"
 	"log"
 )
 

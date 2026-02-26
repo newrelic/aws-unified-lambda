@@ -7,12 +7,12 @@ import (
 	"sync"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/newrelic/aws-unified-lambda-logging/cloudwatch"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
-	"github.com/newrelic/aws-unified-lambda-logging/logger"
-	"github.com/newrelic/aws-unified-lambda-logging/s3"
-	"github.com/newrelic/aws-unified-lambda-logging/unmarshal"
-	"github.com/newrelic/aws-unified-lambda-logging/util"
+	"github.com/newrelic/aws-unified-lambda/src/cloudwatch"
+	"github.com/newrelic/aws-unified-lambda/src/common"
+	"github.com/newrelic/aws-unified-lambda/src/logger"
+	"github.com/newrelic/aws-unified-lambda/src/s3"
+	"github.com/newrelic/aws-unified-lambda/src/unmarshal"
+	"github.com/newrelic/aws-unified-lambda/src/util"
 )
 
 var log = logger.NewLogrusLogger(logger.WithDebugLevel())

@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
 	"os"
+
+	"github.com/newrelic/aws-unified-lambda/src/common"
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/newrelic/aws-unified-lambda-logging/logger"
+	"github.com/newrelic/aws-unified-lambda/src/logger"
 )
 
 var log = logger.NewLogrusLogger(logger.WithDebugLevel())

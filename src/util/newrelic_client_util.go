@@ -2,7 +2,7 @@ package util
 
 import (
 	"context"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"github.com/newrelic/aws-unified-lambda/src/common"
 	"github.com/newrelic/newrelic-client-go/v2/pkg/config"
 	logging "github.com/newrelic/newrelic-client-go/v2/pkg/logs"
 	"github.com/newrelic/newrelic-client-go/v2/pkg/region"

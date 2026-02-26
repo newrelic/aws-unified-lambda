@@ -15,9 +15,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
-	"github.com/newrelic/aws-unified-lambda-logging/logger"
-	"github.com/newrelic/aws-unified-lambda-logging/util"
+	"github.com/newrelic/aws-unified-lambda/src/common"
+	"github.com/newrelic/aws-unified-lambda/src/logger"
+	"github.com/newrelic/aws-unified-lambda/src/util"
 )
 
 // ObjectClient is an interface that defines the methods for interacting with the S3 service.

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	integrationtests "github.com/newrelic/aws-unified-lambda-logging/common"
+	integrationtests "github.com/newrelic/aws-unified-lambda/integration-tests/common"
 )
 
 // FetchLogsFromNewRelic function to fetch logs

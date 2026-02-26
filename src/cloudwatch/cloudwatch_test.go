@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
-	"github.com/newrelic/aws-unified-lambda-logging/util"
+	"github.com/newrelic/aws-unified-lambda/src/common"
+	"github.com/newrelic/aws-unified-lambda/src/util"
 	"github.com/stretchr/testify/assert"
 )
 

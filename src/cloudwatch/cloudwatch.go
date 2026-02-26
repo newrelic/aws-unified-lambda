@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
-	"github.com/newrelic/aws-unified-lambda-logging/logger"
-	"github.com/newrelic/aws-unified-lambda-logging/util"
+	"github.com/newrelic/aws-unified-lambda/src/common"
+	"github.com/newrelic/aws-unified-lambda/src/logger"
+	"github.com/newrelic/aws-unified-lambda/src/util"
 )
 
 // log is a logger instance used for logging messages.

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"github.com/newrelic/aws-unified-lambda/src/common"
 )
 
 // SplitLargeMessages splits a large message into smaller messages if its length exceeds the maximum message size.

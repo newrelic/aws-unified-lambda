@@ -4,7 +4,7 @@ package util
 import (
 	"context"
 	"errors"
-	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"github.com/newrelic/aws-unified-lambda/src/common"
 	"os"
 	"testing"
 

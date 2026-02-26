@@ -2,6 +2,13 @@ package integrationtests
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -11,15 +18,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	integrationtests "github.com/newrelic/aws-unified-lambda-logging/common"
-	"github.com/newrelic/aws-unified-lambda-logging/helpers"
+	integrationtests "github.com/newrelic/aws-unified-lambda/integration-tests/common"
+	"github.com/newrelic/aws-unified-lambda/integration-tests/helpers"
 	"github.com/newrelic/newrelic-client-go/v2/pkg/testhelpers"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 // CreateAWSSession function to create AWS session

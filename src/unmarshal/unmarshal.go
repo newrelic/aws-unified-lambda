@@ -3,7 +3,7 @@ package unmarshal
 
 import (
 	"encoding/json"
-	"github.com/newrelic/aws-unified-lambda-logging/logger"
+	"github.com/newrelic/aws-unified-lambda/src/logger"
 
 	"github.com/aws/aws-lambda-go/events"
 )

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/newrelic/aws-unified-lambda-logging/common"
+	"github.com/newrelic/aws-unified-lambda/src/common"
 	"github.com/stretchr/testify/assert"
 )
 
