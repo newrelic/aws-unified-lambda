@@ -101,7 +101,7 @@ jobs:
 
       - name: Send failure notification to Slack
         if: always()
-        uses: ravsamhq/notify-slack-action@v1
+        uses: ravsamhq/notify-slack-action@v2
         with:
           status: ${{ job.status }}
           notify_when: 'failure'
@@ -151,7 +151,7 @@ jobs:
 
       - name: Send failure notification to Slack
         if: always()
-        uses: ravsamhq/notify-slack-action@v1
+        uses: ravsamhq/notify-slack-action@v2
         with:
           status: ${{ job.status }}
           notify_when: 'failure'
@@ -198,7 +198,7 @@ jobs:
 
       - name: Send failure notification to Slack
         if: always()
-        uses: ravsamhq/notify-slack-action@v1
+        uses: ravsamhq/notify-slack-action@v2
         with:
           status: ${{ job.status }}
           notify_when: 'failure'
@@ -250,7 +250,7 @@ jobs:
 
       - name: Send failure notification to Slack
         if: always()
-        uses: ravsamhq/notify-slack-action@v1
+        uses: ravsamhq/notify-slack-action@v2
         with:
           status: ${{ job.status }}
           notify_when: 'failure'
@@ -282,7 +282,7 @@ jobs:
 
       - name: Send failure notification to Slack
         if: always()
-        uses: ravsamhq/notify-slack-action@v1
+        uses: ravsamhq/notify-slack-action@v2
         with:
           status: ${{ job.status }}
           notify_when: 'failure'
