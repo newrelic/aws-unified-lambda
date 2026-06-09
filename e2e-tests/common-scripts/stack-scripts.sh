@@ -270,7 +270,7 @@ validate_stack_deployment_status() {
     echo "Stack $stack_name was created successfully."
   else
     echo "Stack $stack_name failed to be created and rolled back."
-    failure_reason=$(aws cloudformation describe-stack-events --stack-name "$stack_name" --query "StackEvents[?ResourceStatus==\`$stack_status\`].ResourceStatusReason" --output text)
+    failure_reason=$(aws cloudformation describe-stack-events --stack-name "$stack_name" --query "StackEvents[?ResourceStatus==\`CREATE_FAILED\`].ResourceStatusReason" --output text)
     exit_with_error "Stack $stack_name failed to be created. Failure reason: $failure_reason"
   fi
 }

@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.1
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.2
 	github.com/dsnet/compress v0.0.1
-	github.com/newrelic/newrelic-client-go/v2 v2.83.3
+	github.com/newrelic/newrelic-client-go/v2 v2.86.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 )
