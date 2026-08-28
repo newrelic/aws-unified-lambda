@@ -97,6 +97,7 @@ Resources:
     Properties:
       InlineCode: |
           import json
+          import re
           import boto3
           import cfnresponse
           import logging
@@ -104,10 +105,13 @@ Resources:
           logger = logging.getLogger()
           logger.setLevel(logging.INFO)
 
+          def sanitize_log_input(value):
+              return re.sub(r'[\r\n]+', ' ', str(value))
+
           def handler(event, context):
               responseData = {}
               common_attributes = event['ResourceProperties']['CommonAttributes']
-              logger.info(f'Validating CommonAttributes: {common_attributes}')
+              logger.info(f'Validating CommonAttributes: {sanitize_log_input(common_attributes)}')
 
               # Validate the JSON format
               try:
@@ -122,12 +126,12 @@ Resources:
                       if not attribute['AttributeName'] or not attribute['AttributeValue']:
                           raise ValueError("Each element in CommonAttributes should have non-empty 'AttributeName' and 'AttributeValue' values.")
 
-                  responseData['UserInputCommonAttributesErrorMessages'] = 'No Errors Found in User Input for setting up custom attributes.'           
+                  responseData['UserInputCommonAttributesErrorMessages'] = 'No Errors Found in User Input for setting up custom attributes.'
               except Exception as e:
-                  logger.error(f'CommonAttributes provided {common_attributes} is not a valid JSON, the error is:  {str(e)}')
+                  logger.error(f'CommonAttributes provided {sanitize_log_input(common_attributes)} is not a valid JSON, the error is:  {sanitize_log_input(str(e))}')
                   responseData['UserInputCommonAttributesErrorMessages'] = (
                       'Validation Failed for Input Provided. The CommonAttributes provided : {} is not a valid JSON. '
-                      'Please provide a valid JSON for CommonAttributes.'.format(common_attributes)
+                      'Please provide a valid JSON for CommonAttributes.'.format(sanitize_log_input(common_attributes))
                   )
               # Send success response
               cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
@@ -213,6 +217,7 @@ Resources:
     Properties:
       InlineCode: |
         import json
+        import re
         import cfnresponse
         import boto3
         import logging
@@ -222,6 +227,9 @@ Resources:
 
         s3 = boto3.client('s3')
 
+        def sanitize_log_input(value):
+            return re.sub(r'[\r\n]+', ' ', str(value))
+
         def handler(event, context):
             responseData = {}
             try:
@@ -230,7 +238,7 @@ Resources:
                   return {}
               else:
                   bucket_details = event['ResourceProperties']['BucketNames']
-                  logger.info(f'Validating BucketNames: {bucket_details}')
+                  logger.info(f'Validating BucketNames: {sanitize_log_input(bucket_details)}')
 
                   try:
                       bucket_details_json = json.loads(bucket_details)
@@ -244,12 +252,12 @@ Resources:
                           if not detail['bucket']:
                               raise ValueError("Each element in BucketNames should have non-empty 'bucket' value.")
                   except Exception as e:
-                      logger.error(f'BucketNames provided {bucket_details} is not a valid JSON, the error is:  {str(e)}')
+                      logger.error(f'BucketNames provided {sanitize_log_input(bucket_details)} is not a valid JSON, the error is:  {sanitize_log_input(str(e))}')
                       responseData['BucketARNs'] = ''
                       responseData['ParentBucketARNs'] = ''
                       responseData['S3UserInputErrorMessages'] = (
                           'Validation Failed for Input Provided. The BucketNames provided : {} is not a valid JSON. '
-                          'Please provide a valid JSON for BucketNames.'.format(bucket_details)
+                          'Please provide a valid JSON for BucketNames.'.format(sanitize_log_input(bucket_details))
                       )
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
                       return
@@ -268,11 +276,11 @@ Resources:
                         if bucket_region is None:
                           bucket_region = 'us-east-1'
                         if bucket_region != current_region:
-                          logger.error(f'Bucket {bucket_name} is not in the same region as the lambda function')
+                          logger.error(f'Bucket {sanitize_log_input(bucket_name)} is not in the same region as the lambda function')
                           invalid_bucket_names.append(bucket_name)
                           continue
                       except Exception as e:
-                        logger.error(f'Bucket {bucket_name} does not exist or you do not have access to it: {str(e)}')
+                        logger.error(f'Bucket {sanitize_log_input(bucket_name)} does not exist or you do not have access to it: {sanitize_log_input(str(e))}')
                         invalid_bucket_names.append(bucket_name)
                         continue
                           
@@ -294,12 +302,12 @@ Resources:
                     responseData['S3UserInputErrorMessages'] = (
                       'Validation Failed for Input Provided. These Bucket Names: [{}] do not exist in your account/region or you do not have permission to access it. '
                       'Please setup Lambda event trigger manually for lambda resource Logical ID: "NewRelicLogsServerlessLogForwarder" with additional S3 buckets including these failed ones.'
-                      .format(','.join(invalid_bucket_names))
+                      .format(','.join(sanitize_log_input(b) for b in invalid_bucket_names))
                     )
-                  
+
                   cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
             except Exception as e:
-              logger.error(f'Error: {str(e)}')
+              logger.error(f'Error: {sanitize_log_input(str(e))}')
               cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)}')
 
       Handler: index.handler
@@ -345,6 +353,7 @@ Resources:
     Properties:
       InlineCode: | 
           import json
+          import re
           import cfnresponse
           import logging
           import boto3
@@ -353,6 +362,9 @@ Resources:
 
           logger = logging.getLogger()
           logger.setLevel(logging.INFO)
+
+          def sanitize_log_input(value):
+              return re.sub(r'[\r\n]+', ' ', str(value))
 
           def handler(event, context):
               response = {}
@@ -376,12 +388,12 @@ Resources:
                               if not log_group['LogGroupName']:
                                   raise ValueError("Each element in LogGroupConfig should have non-empty 'LogGroupName' value.")
                       except Exception as e:
-                          logger.error(f'LogGroupConfig provided {log_group_config} is not a valid JSON, the error is:  {str(e)}')
+                          logger.error(f'LogGroupConfig provided {sanitize_log_input(log_group_config)} is not a valid JSON, the error is:  {sanitize_log_input(str(e))}')
                           response['LogGroupArns'] = ''
                           response['InvalidLogGroups'] = ''
                           response['UserInputCloudwatchErrorMessages'] = (
                               'Validation Failed for Input Provided. The LogGroupConfig provided : {} is not a valid JSON. '
-                              'Please provide a valid JSON for LogGroupConfig.'.format(log_group_config)
+                              'Please provide a valid JSON for LogGroupConfig.'.format(sanitize_log_input(log_group_config))
                           )
                           cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
                           return
@@ -393,7 +405,7 @@ Resources:
                       invalid_log_groups = []
                       for log_group in log_group_config_json:
                           log_group_name = log_group['LogGroupName']
-                          logger.info(f'Describing log group {log_group_name}')
+                          logger.info(f'Describing log group {sanitize_log_input(log_group_name)}')
                           # Matches based on prefix, results in a list of log groups. Processes the list further to find the exact match.
                           responseLogGroup = logs_client.describe_log_groups(logGroupNamePrefix=log_group_name) 
                           doesLogGroupExist = False
@@ -405,7 +417,7 @@ Resources:
                               log_group_arns.append(log_group_arn)
                               break
                           if not doesLogGroupExist:
-                            logger.error(f'No log group exists with the name: {log_group_name}')
+                            logger.error(f'No log group exists with the name: {sanitize_log_input(log_group_name)}')
                             invalid_log_groups.append(log_group_name)
                       response['LogGroupArns'] = ','.join(log_group_arns)
                       response['InvalidLogGroups'] = ','.join(invalid_log_groups)
@@ -413,12 +425,12 @@ Resources:
                       if invalid_log_groups:
                             response['UserInputCloudwatchErrorMessages'] = (
                               'Validation Failed for Input Provided. These Log Groups: [{}] do not exist in your account.'
-                              'Please setup Cloudwatch to Lambda Event Trigger subscription manually for additional log groups including these failed ones to send logs to new relic.'.format(','.join(invalid_log_groups))
+                              'Please setup Cloudwatch to Lambda Event Trigger subscription manually for additional log groups including these failed ones to send logs to new relic.'.format(','.join(sanitize_log_input(g) for g in invalid_log_groups))
                             )
 
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
               except Exception as e:
-                  logger.error(f'Error: {str(e)}')
+                  logger.error(f'Error: {sanitize_log_input(str(e))}')
                   cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=f'{str(e)}')
 
       Handler: index.handler

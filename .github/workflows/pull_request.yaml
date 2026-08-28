@@ -79,6 +79,24 @@ jobs:
           sarif_file: cfn_nag.sarif    
           category: security
                                  
+  log-injection-scan:
+    name: Log injection scan (CWE-117/CWE-93)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run log injection scan
+        run: security-scan/scan.sh
+
   trivy-scan:
     name: Trivy security scan
     runs-on: ubuntu-latest
