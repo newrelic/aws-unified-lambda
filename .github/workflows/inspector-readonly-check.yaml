@@ -1,0 +1,33 @@
+name: Inspector Readonly Check
+
+# One-off diagnostic: check whether Amazon Inspector (Lambda code scanning) is
+# enabled for the e2e-test AWS account, and whether AWS_E2E_ROLE can query it.
+# Every step here is a read-only AWS API call -- nothing is deployed, and no
+# account settings are changed. Manual trigger only.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-inspector:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_ROLE }}
+          aws-region: us-east-1
+
+      - name: Who am I
+        run: aws sts get-caller-identity
+
+      - name: Check Inspector account status (read-only)
+        run: |
+          aws inspector2 batch-get-account-status || echo "::warning::batch-get-account-status failed -- see output above"
+
+      - name: List a few findings, if any (read-only)
+        run: |
+          aws inspector2 list-findings --max-results 5 || echo "::warning::list-findings failed -- see output above"
