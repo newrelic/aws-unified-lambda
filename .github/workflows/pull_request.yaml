@@ -79,8 +79,8 @@ jobs:
           sarif_file: cfn_nag.sarif    
           category: security
                                  
-  log-injection-scan:
-    name: Log injection scan (CWE-117/CWE-93)
+  lambda-code-security-scan:
+    name: Semgrep security scan (Lambda code)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -94,7 +94,7 @@ jobs:
       - name: Install Semgrep
         run: pip install semgrep
 
-      - name: Run log injection scan
+      - name: Run Semgrep security-audit scan
         run: security-scan/scan.sh
 
   trivy-scan:
