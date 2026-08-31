@@ -3,10 +3,13 @@ name: Inspector Readonly Check
 # One-off diagnostic: check whether Amazon Inspector (Lambda code scanning) is
 # enabled for the e2e-test AWS account, and whether AWS_E2E_ROLE can query it.
 # Every step here is a read-only AWS API call -- nothing is deployed, and no
-# account settings are changed. Manual trigger only.
+# account settings are changed. Runs on PR to main for testing purposes; remove
+# once the Inspector question is answered.
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   check-inspector:
