@@ -105,6 +105,7 @@ Resources:
           logger = logging.getLogger()
           logger.setLevel(logging.INFO)
 
+          # Strips newline/carriage-return characters to prevent log injection (CWE-117/CWE-93) from untrusted input.
           def sanitize_log_input(value):
               return re.sub(r'[\r\n]+', ' ', str(value))
 
@@ -227,6 +228,7 @@ Resources:
 
         s3 = boto3.client('s3')
 
+        # Strips newline/carriage-return characters to prevent log injection (CWE-117/CWE-93) from untrusted input.
         def sanitize_log_input(value):
             return re.sub(r'[\r\n]+', ' ', str(value))
 
@@ -363,6 +365,7 @@ Resources:
           logger = logging.getLogger()
           logger.setLevel(logging.INFO)
 
+          # Strips newline/carriage-return characters to prevent log injection (CWE-117/CWE-93) from untrusted input.
           def sanitize_log_input(value):
               return re.sub(r'[\r\n]+', ' ', str(value))
 
