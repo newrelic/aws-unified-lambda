@@ -200,6 +200,14 @@ Resources:
       Role: !GetAtt NewRelicLogsS3BucketTriggerIAMRole.Arn
       Runtime: python3.12
       Timeout: 120
+
+  NewRelicLogsS3BucketTriggerLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Condition: HasValidS3Buckets
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${NewRelicLogsS3BucketTriggerLambda}"
   
 Outputs:
   NewRelicLogsS3TriggerSetupErrors:
