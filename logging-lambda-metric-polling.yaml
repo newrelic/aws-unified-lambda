@@ -10,9 +10,9 @@ Metadata:
     SpdxLicenseId: Apache-2.0
     LicenseUrl: LICENSE.txt
     ReadmeUrl: README.md
-    HomePageUrl: https://github.com/newrelic/aws-unified-logging
+    HomePageUrl: https://github.com/newrelic/aws-unified-lambda
     SemanticVersion: 1.1.4
-    SourceCodeUrl: https://github.com/newrelic/aws-unified-logging
+    SourceCodeUrl: https://github.com/newrelic/aws-unified-lambda
     
   AWS::CloudFormation::Interface:
     ParameterGroups:
