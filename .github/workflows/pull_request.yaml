@@ -6,6 +6,10 @@ on:
       - develop
       - main
 
+# default scope for all jobs, checkout only needs read
+permissions:
+  contents: read
+
 jobs:
   validate-template-code:
     runs-on: ubuntu-latest
@@ -61,9 +65,14 @@ jobs:
           echo "Validating template: $template"
           sam validate --template-file "$template" --region us-east-2 --lint
           done
+          
   security:
     runs-on: ubuntu-latest
 
+    # security-events:write needed here, upload-sarif posts to the Security tab
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -9,6 +9,12 @@ jobs:
   trivy:
     name: Trivy security scan
     runs-on: ubuntu-latest
+
+    # contents:read for checkout, security-events:write for upload-sarif to Security tab
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
