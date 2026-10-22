@@ -1,6 +1,6 @@
 module github.com/newrelic/aws-unified-lambda/src
 
-go 1.26.5
+go 1.27.3
 
 require (
 	github.com/aws/aws-lambda-go v1.52.0
@@ -39,6 +39,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tomnomnom/linkheader v0.0.0-20250811210735-e5fe3b51442e // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
